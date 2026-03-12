@@ -1,0 +1,37 @@
+
+port: /dev/ttyDynamixel485
+baud_rate: 115200
+protocol_version: 2.0
+
+dxl:
+  protocol_version: 2.0
+  number_of_dxl: 7
+  dxl_ids: [1, 2, 3, 4, 5, 6, 21]
+  dxl_names: ["joint1", "joint2", "joint3", "joint4", "joint5", "joint6", "hand_joint"]
+  dxl_models: ["xm570_w270", "xm570_w270", "xm570_w270", "xm570_w270", "xm540_w150", "xm540_w150", "xm430_w350"]
+
+  limits:
+    hard:
+      position:
+        max: [4095, 4095, 4095, 4095, 4095, 4095, 4095]
+        min: [0, 0, 0, 0, 0, 0, 0]
+    soft:
+      position:
+        max: [4095, 4095, 4095, 4095, 4095, 4095, 4095]
+        min: [0, 0, 0, 0, 0, 0, 0]
+
+mighty:
+  number_of_mighty: 3
+  mighty_ids: [1, 2, 3]
+  mighty_names: ["gripper_joint1", "gripper_joint2", "gripper_joint3"]
+  mighty_models: ["mightyzap_d12_12f_3", "mightyzap_d12_12f_3", "mightyzap_d12_12f_3"]
+
+  limits:
+    hard:
+      position:
+        max: [1048, 920, 920]
+        min: [131, 131, 131]
+    soft:
+      position:
+        max: [1028, 900, 900]
+        min: [151, 151, 151]
