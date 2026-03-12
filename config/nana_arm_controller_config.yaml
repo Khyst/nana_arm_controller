@@ -8,7 +8,7 @@ dxl:
   number_of_dxl: 7
   dxl_ids: [1, 2, 3, 4, 5, 6, 21]
   dxl_names: ["joint1", "joint2", "joint3", "joint4", "joint5", "joint6", "hand_joint"]
-  dxl_models: ["xm570_w270", "xm570_w270", "xm570_w270", "xm570_w270", "xm540_w150", "xm540_w150", "xm430_w350"]
+  dxl_models: ["xm540_w270", "xm540_w270", "xm540_w270", "xm540_w270", "xm540_w150", "xm540_w150", "xm430_w350"]
 
   limits:
     hard:

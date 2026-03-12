@@ -21,7 +21,7 @@ class NanaArmController:
 
         self.nana_arm_handler = NanaArmWrapper(serial_port=self.port, baudrate=self.baudrate, dxl_models=self.dxl_models, mighty_models=self.mighty_models)
 
-        print("[Info] DynamixelArm initialized successfully.")
+        print("[Info] NANA Arm with Hand initialized successfully.")
 
     def _resolve_config_path(self, file_name):
         """
@@ -97,26 +97,29 @@ class NanaArmController:
 
     def move_to_position(self, arm_positions, hand_positions):
         """
-            주어진 관절 위치로 로봇을 이동시키는 함수 (예시)
+            주어진 관절 위치로 로봇을 이동시키는 함수
         """
         print(f"[Info] Moving to positions: Arm: {arm_positions}, Hand: {hand_positions}")
 
-        self.nana_arm_handler.writePosition(arm_positions, hand_positions)
-        # 실제로는 self.nana_arm_handler 객체를 사용하여 명령을 보내야 합니다.
-        # 예시: self.nana_arm_handler.move_to(arm_positions, hand_positions)
+        # self.nana_arm_handler.writePosition(arm_positions, hand_positions)
+        # # 실제로는 self.nana_arm_handler 객체를 사용하여 명령을 보내야 합니다.
+        # # 예시: self.nana_arm_handler.move_to(arm_positions, hand_positions)mighty
+
+        for idx in range(0, 6):
+            self.nana_arm_handler.writePosition('dynamixel', self.dxl_ids[idx], arm_positions[idx])
+
+        for idx in range(0, 3):
+            self.nana_arm_handler.writePosition('mighty', self.mighty_ids[idx], hand_positions[idx])    
     
     def read_current_positions(self):
         """
-            현재 관절 위치를 읽어오는 함수 (예시)
+            현재 관절 위치를 읽어오는 함수
         """
-        nana_arm_position = self.nana_arm_handler.readPosition()
-        
-        current_arm_positions = nana_arm_position[:self.number_of_dxl]
-        current_hand_positions = nana_arm_position[self.number_of_dxl:self.number_of_dxl + self.number_of_mighty]
-        
-        print(f"[Info] Current positions: Arm: {current_arm_positions}, Hand: {current_hand_positions}")
+        for idx in range(0, 6):
+            self.nana_arm_handler.readPosition('dynamixel', self.dxl_ids[idx])
 
-        return current_arm_positions, current_hand_positions
+        for idx in range(0, 3):
+            self.nana_arm_handler.readPosition('mighty', self.mighty_ids[idx])
     
 if __name__ == "__main__":
     
@@ -124,30 +127,44 @@ if __name__ == "__main__":
         Do some sequence for grasp water bottle, for example:
 
         # 1. 기본 자세
-            - [A1, A1, A1, A1, A1, A1, A1] & [H1, H1, H1]
+            - [A1, A1, A1, A1, A1, A1, A1] & [H1, H1, H1, H1]
         # 2. 팔꿈치를 굽히며 팔을 잡는 자세
-            - [A2, A2, A2, A2, A2, A2, A2] & [H2, H2, H2]
+            - [A2, A2, A2, A2, A2, A2, A2] & [H2, H2, H2, H2]
         # 3. 핸드 열기
-            - [A3, A3, A3, A3, A3, A3, A3] & [H3, H3, H3]
+            - [A3, A3, A3, A3, A3, A3, A3] & [H3, H3, H3, H3]
         # 4. 컵에 다가가기
-            - [A4, A4, A4, A4, A4, A4, A4] & [H3, H3, H3]
+            - [A4, A4, A4, A4, A4, A4, A4] & [H3, H3, H3, H4]
         # 5. 핸드 닫기 (컵 잡기)
-            - [A5, A5, A5, A5, A5, A5, A5] & [H4, H4, H4]
+            - [A5, A5, A5, A5, A5, A5, A5] & [H4, H4, H5, H4]
         # 6. 컵 릴리즈 하기
-            - [A6, A6, A6, A6, A6, A6, A6] & [H3, H3, H3]
+            - [A6, A6, A6, A6, A6, A6, A6] & [H6, H6, H6, H6]
     """
 
     try:
         controller = NanaArmController()
 
-        for step in range(1, 7):
-            # controller.move_to_position(
-            #     arm_positions=[f"A{step}"] * controller.number_of_dxl, 
-            #     hand_positions=[f"H{step}"] * controller.number_of_mighty
-            # )
-            pass
+        while True:
 
+                cmd = input("명령 입력 (a: 첫번 째 모션, b: 현 위치 확인, c: 세번째 모션(미지원), q: 종료): ").lower()
+                if cmd == 'a':
+                    controller.move_to_position([2000, 1200, 1500, 1500, 1500, 2000], [2000, 460, 260, 260])
+                elif cmd == 'b':
+                    controller.read_current_positions()
+                # elif cmd == 'c':
+                #     controller.move_to_position([], [])
+                elif cmd == 'q':
+                    break
+                else:
+                    print("유효하지 않은 값입니다. 다시 입력해주세요!")
 
-        
+    except KeyboardInterrupt:
+        pass
+
     except Exception as e:
         print(f"[Error] {e}")
+
+    finally:
+        pass
+
+
+    

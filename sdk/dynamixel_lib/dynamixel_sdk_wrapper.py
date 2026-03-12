@@ -3,7 +3,8 @@ from typing import Dict, Any
 
 from .dynamixel_sdk import DynamixelSDK  # unified SDK class
 
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) # 라이브러리 경로 설정
+# CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) # 라이브러리 경로 설정
+CURRENT_DIR = "/home/ras/nana_arm_operation_ws/src/nana_arm_controller"
 
 class DynamixelSDKWrapper:
     
@@ -65,9 +66,8 @@ class DynamixelSDKWrapper:
     
     def writePosition(self, id, position):
         print(f"[DynamixelSDKWrapper] Writing position {position} to ID {id}")
-        self.dynamixel_sdk.write4ByteTxRx(id, self.dynamixel_control_tables[self.dxl_models[id]].address['Goal_Position'], position)
+        self.dynamixel_sdk.write4ByteTxRx(id, self.dynamixel_control_tables[self.dxl_models[id]].get('Goal Position').get('address'), position)
         
-
     def readPosition(self, id):
         print(f"[DynamixelSDKWrapper] Reading position from Dynamixel ID {id}")
-        return self.dynamixel_sdk.read4ByteTxRx(id, self.dynamixel_control_tables[self.dxl_models[id]].address['Present_Position'], 4)
+        return self.dynamixel_sdk.read4ByteTxRx(id, self.dynamixel_control_tables[self.dxl_models[id]].get('Present Position').get('address'))
