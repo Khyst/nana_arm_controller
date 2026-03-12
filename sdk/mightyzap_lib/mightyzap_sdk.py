@@ -1,3 +1,7 @@
+"""
+    DO NOT REVISE ME!
+"""
+
 import serial
 
 # Protocol constants

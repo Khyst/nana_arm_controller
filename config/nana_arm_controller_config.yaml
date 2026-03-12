@@ -1,4 +1,3 @@
-
 port: /dev/ttyDynamixel485
 baud_rate: 115200
 protocol_version: 2.0

@@ -7,15 +7,20 @@ import argparse
 from typing import Any, Dict
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) # 라이브러리 경로 설정
-
 CONFIG_FILE_NAME = 'nana_arm_controller_config.yaml'
 
 # NANA Actuator 동작을 위한 Hardware Control Wrapper 클래스 임포트
 from nana_arm_wrapper import NanaArmWrapper
 
 class NanaArmController:
+    """
+        NANA Arm과 Hand를 움직이는 서비스를 위한 Controller 클래스 (High-Level Interface)        
+    """
 
     def __init__(self):
+        """
+            파라미터 로드 및 초기화, NANA Arm과 Hand Low-Level 제어를 위한 Handler 객체 생성
+        """
 
         self.load_and_declare_config()
 
@@ -23,6 +28,7 @@ class NanaArmController:
 
         print("[Info] NANA Arm with Hand initialized successfully.")
 
+    # Helper Functions
     def _resolve_config_path(self, file_name):
         """
             설정 파일의 경로를 찾는 Helper 함수
@@ -95,49 +101,46 @@ class NanaArmController:
 
         self._print_config_info(config_path)
 
-    def move_to_position(self, arm_positions, hand_positions):
+    # Motion Service Functions
+    def move_to_position(self, arm_command, hand_command):
         """
             주어진 관절 위치로 로봇을 이동시키는 함수
+            * command 형식 : [(id, type, position),  (id, type, position), ...]
         """
-        print(f"[Info] Moving to positions: Arm: {arm_positions}, Hand: {hand_positions}")
+        print(f"[Info] Moving to positions: Arm: {arm_command}, Hand: {hand_command}")
 
-        # self.nana_arm_handler.writePosition(arm_positions, hand_positions)
-        # # 실제로는 self.nana_arm_handler 객체를 사용하여 명령을 보내야 합니다.
-        # # 예시: self.nana_arm_handler.move_to(arm_positions, hand_positions)mighty
+        commands = arm_command + hand_command
 
-        for idx in range(0, 6):
-            self.nana_arm_handler.writePosition('dynamixel', self.dxl_ids[idx], arm_positions[idx])
+        self.nana_arm_handler.writePosition(commands)
 
-        for idx in range(0, 3):
-            self.nana_arm_handler.writePosition('mighty', self.mighty_ids[idx], hand_positions[idx])    
-    
-    def read_current_positions(self):
+    # Check current position
+    def check_current_position(self, arm_source, hand_source):
         """
             현재 관절 위치를 읽어오는 함수
+            * source 형식 : [(id, type), (id_type), ]
         """
-        for idx in range(0, 6):
-            self.nana_arm_handler.readPosition('dynamixel', self.dxl_ids[idx])
 
-        for idx in range(0, 3):
-            self.nana_arm_handler.readPosition('mighty', self.mighty_ids[idx])
-    
+        sources = arm_source + hand_source
+
+        self.nana_arm_handler.readPosition(sources)
+            
 if __name__ == "__main__":
     
     """
         Do some sequence for grasp water bottle, for example:
 
         # 1. 기본 자세
-            - [A1, A1, A1, A1, A1, A1, A1] & [H1, H1, H1, H1]
+            - [A1, A1, A1, A1, A1, A1] & [H1, H1, H1, H1]
         # 2. 팔꿈치를 굽히며 팔을 잡는 자세
-            - [A2, A2, A2, A2, A2, A2, A2] & [H2, H2, H2, H2]
+            - [A2, A2, A2, A2, A2, A2] & [H2, H2, H2, H2]
         # 3. 핸드 열기
-            - [A3, A3, A3, A3, A3, A3, A3] & [H3, H3, H3, H3]
+            - [A3, A3, A3, A3, A3, A3] & [H3, H3, H3, H3]
         # 4. 컵에 다가가기
-            - [A4, A4, A4, A4, A4, A4, A4] & [H3, H3, H3, H4]
+            - [A4, A4, A4, A4, A4, A4] & [H4, H4, H4, H4]
         # 5. 핸드 닫기 (컵 잡기)
-            - [A5, A5, A5, A5, A5, A5, A5] & [H4, H4, H5, H4]
+            - [A5, A5, A5, A5, A5, A5] & [H5, H5, H5, H6]
         # 6. 컵 릴리즈 하기
-            - [A6, A6, A6, A6, A6, A6, A6] & [H6, H6, H6, H6]
+            - [A6, A6, A6, A6, A6, A6] & [H6, H6, H6, H6]
     """
 
     try:
@@ -145,13 +148,62 @@ if __name__ == "__main__":
 
         while True:
 
-                cmd = input("명령 입력 (a: 첫번 째 모션, b: 현 위치 확인, c: 세번째 모션(미지원), q: 종료): ").lower()
+                cmd = input("명령 입력 (a: 첫번 째 모션, b: 현 위치 확인, q: 종료): ").lower()
+                
                 if cmd == 'a':
-                    controller.move_to_position([2000, 1200, 1500, 1500, 1500, 2000], [2000, 460, 260, 260])
+                    controller.move_to_position(
+                        [
+                            (1, 'dynamixel', 2000), 
+                            (2, 'dynamixel', 1200), 
+                            (3, 'dynamixel', 1500), 
+                            (4, 'dynamixel', 1500), 
+                            (5, 'dynamixel', 1500), 
+                            (6, 'dynamixel', 2000)
+                        ],
+                        [
+                            (21,'dynamixel', 2000), 
+                            (1, 'mighty', 460), 
+                            (2, 'mighty', 260), 
+                            (3, 'mighty', 260)
+                        ]
+                    )
+                
                 elif cmd == 'b':
-                    controller.read_current_positions()
-                # elif cmd == 'c':
-                #     controller.move_to_position([], [])
+                    controller.move_to_position(
+                        [
+                            (1, 'dynamixel', 2000), 
+                            (2, 'dynamixel', 1200), 
+                            (3, 'dynamixel', 1500), 
+                            (4, 'dynamixel', 1500), 
+                            (5, 'dynamixel', 1500), 
+                            (6, 'dynamixel', 2000)
+                        ],
+                        [
+                            (21,'dynamixel', 2000), 
+                            (1, 'mighty', 600), 
+                            (2, 'mighty', 600), 
+                            (3, 'mighty', 600)
+                        ]
+                    )
+                    
+                elif cmd == 'c':
+                    controller.check_current_position(
+                        [
+                            (1, 'dynamixel'), 
+                            (2, 'dynamixel'), 
+                            (3, 'dynamixel'), 
+                            (4, 'dynamixel'), 
+                            (5, 'dynamixel'), 
+                            (6, 'dynamixel')
+                        ],
+                        [
+                            (21, 'dynamixel'),
+                            (1, 'mighty'),
+                            (2, 'mighty'),
+                            (3, 'mighty')
+                        ]
+                    )
+                
                 elif cmd == 'q':
                     break
                 else:
@@ -165,6 +217,3 @@ if __name__ == "__main__":
 
     finally:
         pass
-
-
-    

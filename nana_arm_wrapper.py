@@ -9,7 +9,10 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) # 라이브러리 경�
 class NanaArmWrapper:
     
     def __init__(self, serial_port, baudrate, dxl_models, mighty_models):
-        
+        """
+            NANA Arm과 Hand의 Low-Level 제어를 담당하는 Wrapper 클래스 (Low-level Interface)
+            - serial_handler를 통해 실제 액추에이터와 통신을 함으로써 Arm과 Hand를 제어하는 역할을 수행.
+        """
         self.serial_port = serial_port
         self.baudrate = baudrate
         self.timeout = 0.1
@@ -31,32 +34,33 @@ class NanaArmWrapper:
         self.dynamixel_sdk_handler = DynamixelSDKWrapper(self.serial_handler, self.dxl_models)
 
     def __close__(self):
-        
         if self.serial_handler and self.serial_handler.is_open:
             self.serial_handler.close()
             print(f"[Info] Serial connection on {self.serial_port} closed.")
 
-    def writePosition(self, type, id, position):
+    def writePosition(self, commands):
         
-        if type == 'mighty':
-            self.mightyzap_sdk_handler.writePosition(id, position)
+        for cmd in commands:   
+            id, type, position = cmd
+            
+            if type == 'mighty':
+                self.mightyzap_sdk_handler.writePosition(id, position)
+            
+            elif type == 'dynamixel':
+                self.dynamixel_sdk_handler.writePosition(id, position)
 
-            # read current position for verification
-            current_position = self.mightyzap_sdk_handler.readPosition(id)
-            print(f"[Info] Verified MightyZap ID {id} position: {current_position}")
-
-        elif type == 'dynamixel':
-            self.dynamixel_sdk_handler.writePosition(id, position)
-
-    def readPosition(self, type, id):
-                        
-        if type == 'mighty':
-            current_position = self.mightyzap_sdk_handler.readPosition(id)
-            print(f"[Info] Verified MightyZap ID {id} position: {current_position}")
-
-        elif type == 'dynamixel':
-            current_position = self.dynamixel_sdk_handler.readPosition(id)
-            print(f"[Info] Verified Dynamixel ID {id} position: {current_position}")
-
+    def readPosition(self, sources):
+        
+        for src in sources:
+            id, type = src
+            
+            if type == 'mighty':
+                current_position = self.mightyzap_sdk_handler.readPosition(id)
+                print(f"[Info] Verified MightyZap ID {id} position: {current_position}")
+            
+            elif type == 'dynamixel':
+                current_position = self.dynamixel_sdk_handler.readPosition(id)
+                print(f"[Info] Verified Dynamixel ID {id} position: {current_position}")
+    
 if __name__ == "__main__":
     pass

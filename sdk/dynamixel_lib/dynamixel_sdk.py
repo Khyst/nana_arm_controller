@@ -1,25 +1,7 @@
 """
-dynamixel_sdk.py
-~~~~~~~~~~~~~~~~
-Dynamixel SDK 통합 래퍼.
-
-기존 dynamixel_sdk/ 패키지의 PortHandler, Protocol1/2PacketHandler,
-GroupSync/Bulk Read/Write 를 하나의 DynamixelSDK 클래스로 통합합니다.
-
-DynamixelSDK 생성자는 외부에서 주입한 pyserial Serial 인스턴스를 받아
-내부에서 PortHandler 어댑터로 연결합니다.
-
-사용 예::
-
-    import serial
-    from sdk.dynamixel_lib.dynamixel_sdk import DynamixelSDK
-
-    ser = serial.Serial('/dev/ttyUSB0', 57600, timeout=0)
-    sdk = DynamixelSDK(ser)
-
-    # protocol 2.0 read
-    value, result, error = sdk.read4ByteTxRx(dxl_id=1, address=116, length=4)
+    DO NOT REVISE ME!
 """
+
 
 import time
 import sys
