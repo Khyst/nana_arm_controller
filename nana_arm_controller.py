@@ -2,8 +2,10 @@ import os
 import sys
 import time
 import yaml
-import argparse
+import json
+import select
 import random
+import argparse
 
 from datetime import datetime
 from typing import Any, Dict
@@ -148,29 +150,64 @@ class NanaArmController:
         for item in command:
             print(item)
 
-    def _save_commands(self, command):
+    def _save_commands(self, command, arm_source=None, hand_source=None):
         """
-            Helper function for saving recorded command into file in commands/
+            Helper function for saving recorded command into json/motion/ as JSON
+            The saved format matches `json/motion/pick_cup_motion.json`:
         """
-        # 1. Define and create the 'command' directory
-        save_dir = os.path.join(CURRENT_DIR, "command")
+        # prepare output directory json/motion
+        save_dir = os.path.join(CURRENT_DIR, "json", "motion")
         os.makedirs(save_dir, exist_ok=True)
 
-        # 2. Define and create filename with timestamp
+        # filename with timestamp
         timestamp = datetime.now().strftime("%y%m%d_%H%M%S")
-        filename = f"commands_{timestamp}.txt"
-        
-        #3. Define the full file path
+        filename = f"commands_{timestamp}.json"
         file_path = os.path.join(save_dir, filename)
-        
-        # 4. Write the data to the file
+
         try:
-            with open(file_path, "w", encoding="utf-8") as f:
-                for item in command:
-                    f.write(f"{item}\n")
-            print(f"Successfully saved to: {file_path}")
+            steps = []
+
+            arm_len = len(arm_source) if arm_source is not None else 0
+            
+            for idx, recorded_step in enumerate(command):
+                
+                arm_entries = recorded_step[:arm_len]  # recorded_step expected like [(id, type, pos), ...]
+                hand_entries = recorded_step[arm_len:]
+
+                # convert tuples to lists to match JSON style
+                arm_list = [list(x) for x in arm_entries]
+                hand_list = [list(x) for x in hand_entries]
+
+                steps.append({
+                    "description": str(idx + 1),
+                    "arm": arm_list,
+                    "hand": hand_list,
+                })
+
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(steps, f, ensure_ascii=False, indent=4)
+
+            print(f"Successfully saved motion JSON to: {file_path}")
         except Exception as e:
-            print(f"Error saving file: {e}")
+            print(f"Error saving JSON file: {e}")
+
+    def _load_motion_data(self, file_name):
+        file_path = os.path.join(CURRENT_DIR, "json", "motion", file_name + ".json")
+        
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            return None
+        
+    def _load_pose_data(self, file_name):
+        
+        file_path = os.path.join(CURRENT_DIR, "json", "pose", file_name + ".json")
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            return None
 
     def load_and_declare_config(self):
         """
@@ -225,11 +262,43 @@ class NanaArmController:
 
         commands = arm_command + hand_command # List Concatenate
 
-        # if not self._is_position_within_limits(commands):
-        #     print("[Error] One or more commands are out of soft limits. Aborting move.")
-        #     return
+        if not self._is_position_within_limits(commands):
+            print("[Error] One or more commands are out of soft limits. Aborting move.")
+            return
 
         self.nana_arm_handler.writePosition(commands)
+
+    # Execute Motion Sequence
+    def execute_motion(self, motion_data):
+
+        for step in motion_data:
+
+            description = step.get('description', 'No description provided.')
+            arm_command = step.get('arm', [])
+            hand_command = step.get('hand', [])
+            
+            print(f"\n\n[Info] Executing step: {description}")
+            print(" ==========================================================================")
+            self.move_to_position(arm_command, hand_command)
+            self.wait_until_reach_position(arm_command, hand_command)
+            print(" ==========================================================================")
+
+        print(f"[Info] Motion execution completed.")
+
+    # Execute Pose
+    def execute_pose(self, pose_data):
+
+        description = pose_data.get('description', 'No description provided.')
+        arm_command = pose_data.get('arm', [])
+        hand_command = pose_data.get('hand', [])
+        
+        print(f"[Info] Executing pose: {description}")
+        print(" ==========================================================================")
+        self.move_to_position(arm_command, hand_command)
+        self.wait_until_reach_position(arm_command, hand_command)
+        print(" ==========================================================================")
+
+        print(f"[Info] Pose execution completed.")
 
     # Wait Until Reach Position
     def wait_until_reach_position(self, arm_command, hand_command, timeout=10.0):
@@ -257,8 +326,8 @@ class NanaArmController:
 
         return self.nana_arm_handler.readPosition(sources)
 
-    # Capture Motion with Torque Disable
-    def capture_motion(self, arm_source, hand_source):
+    # Capture Motion with Torque Disable every 2.0 seconds, until user presses Enter or 'q'/'Q'
+    def motion_capture(self, arm_source, hand_source, timeout=2.0):
         """
             Torque를 Disable한 상태로 관절을 직접 움직이며 Encoder 값을 기록하기 위한 함수
         """
@@ -268,22 +337,38 @@ class NanaArmController:
         self.nana_arm_handler.disableTorque(sources)
 
 
-        # 2. record commands repeately
+        # 2. record commands repeatedly every 1 second
         recorded_commands = []
 
         step = 0
-        while True:
-            user_input = input(f"{step}번째 모션 캡처? (Y: 캡처,  X: 종료)")
-            print("==========================================================================")
+        print(f"[Info] Capturing current positions every {timeout} second(s).")
+        print("[Info] Press Enter (empty line) or type 'q'/'Q' then Enter to stop capturing.")
 
-            if(user_input == 'X' or user_input =='x'):
-                break
+        try:
+            while True:
+                # capture current positions
+                command = self.check_current_position(arm_source, hand_source)
+                self._print_recorded_command(command)
+                recorded_commands.append(command)
+                step += 1
 
-            # 2.1 get the current positions from dxl and mighty zap
-            command = self.check_current_position(arm_source, hand_source)
-            self._print_recorded_command(command)
-            recorded_commands.append(command)
-            step = step + 1
+                # wait up to `timeout` seconds for user input; stop if Enter (empty) or 'q'/'Q'
+                print(f"Captured step {step}. Waiting {timeout} second(s) before next capture...")
+                rlist, _, _ = select.select([sys.stdin], [], [], timeout)
+                if not rlist:
+                    continue
+
+                line = sys.stdin.readline()
+                if line is None:
+                    continue
+
+                s = line.strip()
+                if s == '' or s in ('q', 'Q'):
+                    print("[Info] Stop signal received. Stopping capture.")
+                    break
+
+        except KeyboardInterrupt:
+            print("[Info] KeyboardInterrupt received. Stopping capture.")
 
         # 3. Enable Torque
         self.nana_arm_handler.enableTorque(sources)
@@ -300,11 +385,8 @@ if __name__ == "__main__":
 
                 print("\n[Command Options]"
                         "\n=========================================================================="
-                        "\n a: Motion A (물체 파지)"
-                        "\n b: Motion B (물체 파지 + 초기자세로 돌아오기)"
-                        "\n c: Motion C (팔 벌리기 + 물체 파지)"
-                        "\n i: Pose I (Initial Pose)"
-                        "\n s: Pose S (Stretch Pose)"
+                        "\n motion: Execute Motion Sequence from File"
+                        "\n pose: Execute Pose from File"
                         "\n check: Check Current Position"
                         "\n random: Make Random Position within Hard Limits and Move"
                         "\n motion_capture: Capture Motion with Torque Off"
@@ -318,129 +400,42 @@ if __name__ == "__main__":
 
                 cmd = input("명령 입력 : ").lower()
                 
-                # Move Option A (가장 유력)
-                if cmd == 'a':
+                # Motion
+                if cmd == 'motion':
 
-                    # 팔벌리기
-                    controller.move_to_position(
-                        [
-                            (1, 'dynamixel', 2000), 
-                            (2, 'dynamixel', 2000), 
-                            (3, 'dynamixel', 2000), 
-                            (4, 'dynamixel', 3000), 
-                            (5, 'dynamixel', 2100), 
-                            (6, 'dynamixel', 2100)
-                        ],
-                        [
-                            (21,'dynamixel', 1020), 
-                            (1, 'mighty', 1048), 
-                            (2, 'mighty', 920), 
-                            (3, 'mighty', 920)
-                        ]
-                    )
+                    file_name = input("실행할 모션 파일 이름을 입력하세요 (예시: pick_cup_motion) : ")
 
-                    controller.wait_until_reach_position(
-                        [
-                            (1, 'dynamixel', 2000), 
-                            (2, 'dynamixel', 2000), 
-                            (3, 'dynamixel', 2000), 
-                            (4, 'dynamixel', 3000), 
-                            (5, 'dynamixel', 2100), 
-                            (6, 'dynamixel', 2100)
-                        ],
-                        [
-                            (21,'dynamixel', 1020), 
-                            (1, 'mighty', 1048), 
-                            (2, 'mighty', 920), 
-                            (3, 'mighty', 920)
-                        ]
-                    )
+                    if not file_name:
+                        print("[Error] 파일 이름이 입력되지 않았습니다. pick_cup_motion으로 대체합니다.")
+                        file_name = "pick_cup_motion"
 
-                    controller.move_to_position(
-                        [
-                            (1, 'dynamixel', 1868), 
-                            (2, 'dynamixel', 1316), 
-                            (3, 'dynamixel', 1289), 
-                            (4, 'dynamixel', 3544), 
-                            (5, 'dynamixel', 1932), 
-                            (6, 'dynamixel', 1435)
-                        ],
-                        [
-                            (21, 'dynamixel', 1021), 
-                            (1, 'mighty', 1024), 
-                            (2, 'mighty', 917), 
-                            (3, 'mighty', 924)
-                        ]
-                    )
+                    motion_data = controller._load_motion_data(file_name)
 
-                    controller.wait_until_reach_position(
-                        [
-                            (1, 'dynamixel', 1868), 
-                            (2, 'dynamixel', 1316), 
-                            (3, 'dynamixel', 1289), 
-                            (4, 'dynamixel', 3544), 
-                            (5, 'dynamixel', 1932), 
-                            (6, 'dynamixel', 1435)
-                        ],
-                        [
-                            (21, 'dynamixel', 1021), 
-                            (1, 'mighty', 1024), 
-                            (2, 'mighty', 917), 
-                            (3, 'mighty', 924)
-                        ]
-                    )
+                    if(motion_data is None):
+                        print("[Error] 모션 데이터를 불러오는데 실패했습니다. 파일 이름과 경로를 확인해주세요.")
+                        print(f"file: {file_name}, path: {os.path.join(CURRENT_DIR, 'json', 'motion', file_name + '.json')}")
+                        continue
 
-                    controller.move_to_position(
-                        [
-                            (1, 'dynamixel', 1752),
-                            (2, 'dynamixel', 1356), 
-                            (3, 'dynamixel', 1799), 
-                            (4, 'dynamixel', 3871), 
-                            (5, 'dynamixel', 1512), 
-                            (6, 'dynamixel', 1059)
-                        ],
-                        [
-                            (21, 'dynamixel', 2048), 
-                            (1, 'mighty', 1024), 
-                            (2, 'mighty', 917), 
-                            (3, 'mighty', 925)
-                        ]
-                    )
+                    controller.execute_motion(motion_data)
+                    
+                # Pose
+                elif cmd == 'pose':
+                    
+                    file_name = input("실행할 포즈 파일 이름을 입력하세요 (예시: initial_pose) : ")
 
-                    controller.wait_until_reach_position(
-                        [
-                            (1, 'dynamixel', 1752),
-                            (2, 'dynamixel', 1356), 
-                            (3, 'dynamixel', 1799), 
-                            (4, 'dynamixel', 3871), 
-                            (5, 'dynamixel', 1512), 
-                            (6, 'dynamixel', 1059)
-                        ],
-                        [
-                            (21, 'dynamixel', 2048), 
-                            (1, 'mighty', 1024), 
-                            (2, 'mighty', 917), 
-                            (3, 'mighty', 925)
-                        ]
-                    )
+                    if not file_name:
+                        print("[Error] 파일 이름이 입력되지 않았습니다. initial_pose로 대체합니다.")
+                        file_name = "initial_pose"
 
-                    controller.move_to_position(
-                        [
-                            (1, 'dynamixel', 1752),
-                            (2, 'dynamixel', 1356), 
-                            (3, 'dynamixel', 1799), 
-                            (4, 'dynamixel', 3871), 
-                            (5, 'dynamixel', 1512), 
-                            (6, 'dynamixel', 1059)
-                        ],
-                        [
-                            (21, 'dynamixel', 2048), 
-                            (1, 'mighty', 460), 
-                            (2, 'mighty', 260), 
-                            (3, 'mighty', 260)
-                        ]
-                    )
-                
+                    pose_data = controller._load_pose_data(file_name)
+
+                    if(pose_data is None):
+                        print("[Error] 포즈 데이터를 불러오는데 실패했습니다. 파일 이름과 경로를 확인해주세요.")
+                        print(f"file: {file_name}, path: {os.path.join(CURRENT_DIR, 'json', 'pose', file_name + '.json')}")
+                        continue
+
+                    controller.execute_pose(pose_data)
+
                 # Check Current Position
                 elif cmd == 'check':
                     controller.check_current_position(
@@ -482,8 +477,8 @@ if __name__ == "__main__":
                 # Motion Capture
                 elif cmd == 'motion_capture':
                     # capture motion with torque off.
-                    controller.capture_motion(
-                          [
+                    controller.motion_capture(
+                        [
                             (1, 'dynamixel'), 
                             (2, 'dynamixel'), 
                             (3, 'dynamixel'), 
@@ -496,7 +491,8 @@ if __name__ == "__main__":
                             (1, 'mighty'),
                             (2, 'mighty'),
                             (3, 'mighty')
-                        ]
+                        ],
+                        timeout=2.0
                     )
                 
                 # Torque Off 
@@ -537,67 +533,6 @@ if __name__ == "__main__":
                         ]
                     )
 
-                # Initial Pose
-                elif cmd == 'i':
-                    # initial pose
-                    controller.move_to_position(
-                        [
-                            (1, 'dynamixel', 2001), 
-                            (2, 'dynamixel', 1970), 
-                            (3, 'dynamixel', 2017), 
-                            (4, 'dynamixel', 2935), 
-                            (5, 'dynamixel', 1340), 
-                            (6, 'dynamixel', 1928)
-                        ],
-                        [
-                            (21, 'dynamixel', 1020), 
-                            (1, 'mighty', 1028), 
-                            (2, 'mighty', 920), 
-                            (3, 'mighty', 920)
-                        ]
-                    )
-
-                    # initial pose
-                    # controller.move_to_position(
-                    #     [
-                    #         (1, 'dynamixel', 1993), 
-                    #         (2, 'dynamixel', 2134), 
-                    #         (3, 'dynamixel', 2034), 
-                    #         (4, 'dynamixel', 2905), 
-                    #         (5, 'dynamixel', 1319), 
-                    #         (6, 'dynamixel', 2067)
-                    #     ],
-                    #     [
-                    #         (21, 'dynamixel', 1298), 
-                    #         (1, 'mighty', 1028), 
-                    #         (2, 'mighty', 920), 
-                    #         (3, 'mighty', 920)
-                    #     ]
-                    # )
-                    print(f"initial pose is executed")
-                
-                # Stretch Pose
-                elif cmd == 's':
-                    # Stretch
-
-                    # 팔벌리기
-                    controller.move_to_position(
-                        [
-                            (1, 'dynamixel', 2000), 
-                            (2, 'dynamixel', 2000), 
-                            (3, 'dynamixel', 2000), 
-                            (4, 'dynamixel', 3000), 
-                            (5, 'dynamixel', 2100), 
-                            (6, 'dynamixel', 2100)
-                        ],
-                        [
-                            (21,'dynamixel', 1020), 
-                            (1, 'mighty', 1048), 
-                            (2, 'mighty', 920), 
-                            (3, 'mighty', 920)
-                        ]
-                    )
-
                 # Debug
                 elif cmd == 'debug':
                     print("\n[Debug Mode] 포지션 값을 순서대로 입력하세요.")
@@ -631,10 +566,10 @@ if __name__ == "__main__":
                         print(f"[Error] 10개의 값이 필요합니다. (현재 {len(values)}개 입력됨)")
                 
                 # Quit
-                elif cmd == 'q':
+                elif cmd == 'q' or cmd == 'quit' or cmd == 'exit' or cmd == 'end':
                     break
-                
-                
+
+                # Invalid Command       
                 else:
                     print("유효하지 않은 값입니다. 다시 입력해주세요!")
 
