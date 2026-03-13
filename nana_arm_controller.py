@@ -231,6 +231,21 @@ class NanaArmController:
 
         self.nana_arm_handler.writePosition(commands)
 
+    # Wait Until Reach Position
+    def wait_until_reach_position(self, arm_command, hand_command, timeout=10.0):
+        """
+            Dynamixel 및 MightyZap이 Moving Status가 False임을 반환할 때 까지 대기하는 함수
+        """
+
+        commands = arm_command + hand_command # List Concatenate
+        
+        while True:
+            
+            if self.nana_arm_handler.isMoving(commands) == False:
+                break
+
+            time.sleep(0.01)
+            
     # Check current position
     def check_current_position(self, arm_source, hand_source):
         """
@@ -277,193 +292,34 @@ class NanaArmController:
         self._save_commands(recorded_commands)
 
 if __name__ == "__main__":
-    
-    """
-        Do some sequence for grasp water bottle, for example:
-
-        # 1. 기본 자세
-            - [A1, A1, A1, A1, A1, A1] & [H1, H1, H1, H1]
-        # 2. 팔꿈치를 굽히며 팔을 잡는 자세
-            - [A2, A2, A2, A2, A2, A2] & [H2, H2, H2, H2]
-        # 3. 핸드 열기
-            - [A3, A3, A3, A3, A3, A3] & [H3, H3, H3, H3]
-        # 4. 컵에 다가가기
-            - [A4, A4, A4, A4, A4, A4] & [H4, H4, H4, H4]
-        # 5. 핸드 닫기 (컵 잡기)
-            - [A5, A5, A5, A5, A5, A5] & [H5, H5, H5, H6]
-        # 6. 컵 릴리즈 하기
-            - [A6, A6, A6, A6, A6, A6] & [H6, H6, H6, H6]
-    """
 
     try:
         controller = NanaArmController()
 
         while True:
 
-                cmd = input("명령 입력 : \n \
-                    (a: 첫 번째 모션, b: 두 번쨰 모션, c: 현재 위치 확인, r: 랜덤 위치, m: 모션 캡처, ton: 토크 온, toff: 토크 오프, q: 종료)").lower()
+                print("\n[Command Options]"
+                        "\n=========================================================================="
+                        "\n a: Motion A (물체 파지)"
+                        "\n b: Motion B (물체 파지 + 초기자세로 돌아오기)"
+                        "\n c: Motion C (팔 벌리기 + 물체 파지)"
+                        "\n i: Pose I (Initial Pose)"
+                        "\n s: Pose S (Stretch Pose)"
+                        "\n check: Check Current Position"
+                        "\n random: Make Random Position within Hard Limits and Move"
+                        "\n motion_capture: Capture Motion with Torque Off"
+                        "\n torque_off: Turn Torque Off"
+                        "\n torque_on: Turn Torque On"
+                        "\n debug: Debug Mode for Moving to Custom Position"
+
+                        "\n q: Quit"
+                        "\n=========================================================================="
+                )
+
+                cmd = input("명령 입력 : ").lower()
                 
-                # Move Option A
+                # Move Option A (가장 유력)
                 if cmd == 'a':
-                    # 준비자세
-                    controller.move_to_position(
-                        [
-                            (1, 'dynamixel', 2001), 
-                            (2, 'dynamixel', 1970), 
-                            (3, 'dynamixel', 2017), 
-                            (4, 'dynamixel', 2935), 
-                            (5, 'dynamixel', 1340), 
-                            (6, 'dynamixel', 1928)
-                        ],
-                        [
-                            (21, 'dynamixel', 1020), 
-                            (1, 'mighty', 1028), 
-                            (2, 'mighty', 920), 
-                            (3, 'mighty', 920)
-                        ]
-                    )
-                    time.sleep(2.0)
-
-                    # 물체에 다가가기
-                    controller.move_to_position(
-                        [
-                            (1, 'dynamixel', 1774), 
-                            (2, 'dynamixel', 1967), 
-                            (3, 'dynamixel', 1234), 
-                            (4, 'dynamixel', 2848), 
-                            (5, 'dynamixel', 1381), 
-                            (6, 'dynamixel', 1952)
-                        ],
-                        [
-                            (21,'dynamixel', 2000), 
-                            (1, 'mighty', 1048), 
-                            (2, 'mighty', 920), 
-                            (3, 'mighty', 920)
-                        ]
-                    )
-                    time.sleep(2.0)
-
-                    # 파지하기
-                    controller.move_to_position(
-                        [
-                            (1, 'dynamixel', 1774), 
-                            (2, 'dynamixel', 1967), 
-                            (3, 'dynamixel', 1234), 
-                            (4, 'dynamixel', 2848), 
-                            (5, 'dynamixel', 1381), 
-                            (6, 'dynamixel', 1952)
-                        ],
-                        [
-                            (21,'dynamixel', 2000), 
-                            (1, 'mighty', 131), 
-                            (2, 'mighty', 131), 
-                            (3, 'mighty', 131)
-                        ]
-                    )
-                    time.sleep(2.0)
-
-                    controller.move_to_position(
-                        [
-                            (1, 'dynamixel', 2001), 
-                            (2, 'dynamixel', 1970), 
-                            (3, 'dynamixel', 2017), 
-                            (4, 'dynamixel', 2935), 
-                            (5, 'dynamixel', 1340), 
-                            (6, 'dynamixel', 1928)
-                        ],
-                        [
-                            (21, 'dynamixel', 1020), 
-                            (1, 'mighty', 1028), 
-                            (2, 'mighty', 920), 
-                            (3, 'mighty', 920)
-                        ]
-                    )
-
-                    print("[Info] 물체를 파지하였습니다.")
-                
-                # Move Option B
-                elif cmd == 'b':
-                    print("[Info] Sequence B를 시작합니다.")
-
-                    # 준비자세
-                    controller.move_to_position(
-                        [
-                            (1, 'dynamixel', 2001), 
-                            (2, 'dynamixel', 1970), 
-                            (3, 'dynamixel', 2017), 
-                            (4, 'dynamixel', 2935), 
-                            (5, 'dynamixel', 1340), 
-                            (6, 'dynamixel', 1928)
-                        ],
-                        [
-                            (21, 'dynamixel', 1020), 
-                            (1, 'mighty', 1028), 
-                            (2, 'mighty', 920), 
-                            (3, 'mighty', 920)
-                        ]
-                    )
-                    time.sleep(2.0)
-
-                    # 물체에 다가가기
-                    controller.move_to_position(
-                        [
-                            (1, 'dynamixel', 1774), 
-                            (2, 'dynamixel', 1967), 
-                            (3, 'dynamixel', 1234), 
-                            (4, 'dynamixel', 2848), 
-                            (5, 'dynamixel', 1381), 
-                            (6, 'dynamixel', 1952)
-                        ],
-                        [
-                            (21,'dynamixel', 2000), 
-                            (1, 'mighty', 1048), 
-                            (2, 'mighty', 920), 
-                            (3, 'mighty', 920)
-                        ]
-                    )
-                    time.sleep(2.0)
-
-                    # 파지하기
-                    controller.move_to_position(
-                        [
-                            (1, 'dynamixel', 1774), 
-                            (2, 'dynamixel', 1967), 
-                            (3, 'dynamixel', 1234), 
-                            (4, 'dynamixel', 2848), 
-                            (5, 'dynamixel', 1381), 
-                            (6, 'dynamixel', 1952)
-                        ],
-                        [
-                            (21,'dynamixel', 2000), 
-                            (1, 'mighty', 131), 
-                            (2, 'mighty', 131), 
-                            (3, 'mighty', 131)
-                        ]
-                    )
-
-                    time.sleep(2.0)
-
-                    controller.move_to_position(
-                        [
-                            (1, 'dynamixel', 2001), 
-                            (2, 'dynamixel', 1970), 
-                            (3, 'dynamixel', 2017), 
-                            (4, 'dynamixel', 2935), 
-                            (5, 'dynamixel', 1340), 
-                            (6, 'dynamixel', 1928)
-                        ],
-                        [
-                            (21, 'dynamixel', 1020), 
-                            (1, 'mighty', 1028), 
-                            (2, 'mighty', 920), 
-                            (3, 'mighty', 920)
-                        ]
-                    )
-
-                    print("[Info] 물체를 파지하였습니다.")
-                
-                # Move Option D
-                elif cmd == 'd':
 
                     # 팔벌리기
                     controller.move_to_position(
@@ -483,7 +339,22 @@ if __name__ == "__main__":
                         ]
                     )
 
-                    time.sleep(2.0)
+                    controller.wait_until_reach_position(
+                        [
+                            (1, 'dynamixel', 2000), 
+                            (2, 'dynamixel', 2000), 
+                            (3, 'dynamixel', 2000), 
+                            (4, 'dynamixel', 3000), 
+                            (5, 'dynamixel', 2100), 
+                            (6, 'dynamixel', 2100)
+                        ],
+                        [
+                            (21,'dynamixel', 1020), 
+                            (1, 'mighty', 1048), 
+                            (2, 'mighty', 920), 
+                            (3, 'mighty', 920)
+                        ]
+                    )
 
                     controller.move_to_position(
                         [
@@ -502,7 +373,22 @@ if __name__ == "__main__":
                         ]
                     )
 
-                    time.sleep(2.0)
+                    controller.wait_until_reach_position(
+                        [
+                            (1, 'dynamixel', 1868), 
+                            (2, 'dynamixel', 1316), 
+                            (3, 'dynamixel', 1289), 
+                            (4, 'dynamixel', 3544), 
+                            (5, 'dynamixel', 1932), 
+                            (6, 'dynamixel', 1435)
+                        ],
+                        [
+                            (21, 'dynamixel', 1021), 
+                            (1, 'mighty', 1024), 
+                            (2, 'mighty', 917), 
+                            (3, 'mighty', 924)
+                        ]
+                    )
 
                     controller.move_to_position(
                         [
@@ -521,7 +407,22 @@ if __name__ == "__main__":
                         ]
                     )
 
-                    time.sleep(2.0)
+                    controller.wait_until_reach_position(
+                        [
+                            (1, 'dynamixel', 1752),
+                            (2, 'dynamixel', 1356), 
+                            (3, 'dynamixel', 1799), 
+                            (4, 'dynamixel', 3871), 
+                            (5, 'dynamixel', 1512), 
+                            (6, 'dynamixel', 1059)
+                        ],
+                        [
+                            (21, 'dynamixel', 2048), 
+                            (1, 'mighty', 1024), 
+                            (2, 'mighty', 917), 
+                            (3, 'mighty', 925)
+                        ]
+                    )
 
                     controller.move_to_position(
                         [
@@ -539,92 +440,9 @@ if __name__ == "__main__":
                             (3, 'mighty', 260)
                         ]
                     )
-
-                    time.sleep(2.0)
                 
-                # Move Option E
-                elif cmd == 'e':
-                    """
-                        [(1, 'dynamixel', 1806), (2, 'dynamixel', 2015), (3, 'dynamixel', 1176), (4, 'dynamixel', 2717), (5, 'dynamixel', 1317), (6, 'dynamixel', 1911), (21, 'dynamixel', 1984), (1, 'mighty', 1024), (2, 'mighty', 918), (3, 'mighty', 921)]
-                        [(1, 'dynamixel', 1831), (2, 'dynamixel', 2068), (3, 'dynamixel', 1435), (4, 'dynamixel', 2889), (5, 'dynamixel', 1380), (6, 'dynamixel', 1607), (21, 'dynamixel', 1984), (1, 'mighty', 1024), (2, 'mighty', 919), (3, 'mighty', 922)]
-                        [(1, 'dynamixel', 1823), (2, 'dynamixel', 2001), (3, 'dynamixel', 970), (4, 'dynamixel', 2691), (5, 'dynamixel', 1297), (6, 'dynamixel', 2150), (21, 'dynamixel', 1984), (1, 'mighty', 1024), (2, 'mighty', 919), (3, 'mighty', 921)]
-                        [(1, 'dynamixel', 2119), (2, 'dynamixel', 3113), (3, 'dynamixel', 1805), (4, 'dynamixel', 2220), (5, 'dynamixel', 1936), (6, 'dynamixel', 1759), (21, 'dynamixel', 1982), (1, 'mighty', 1024), (2, 'mighty', 918), (3, 'mighty', 922)]
-                        [(1, 'dynamixel', 2137), (2, 'dynamixel', 3046), (3, 'dynamixel', 2013), (4, 'dynamixel', 2078), (5, 'dynamixel', 1173), (6, 'dynamixel', 2119), (21, 'dynamixel', 1974), (1, 'mighty', 1024), (2, 'mighty', 918), (3, 'mighty', 922)]
-                    """
-
-                    controller.move_to_position(
-                        [
-                            (1, 'dynamixel', 2119),
-                            (2, 'dynamixel', 3113),
-                            (3, 'dynamixel', 1805),
-                            (4, 'dynamixel', 2220),
-                            (5, 'dynamixel', 1936),
-                            (6, 'dynamixel', 1759)
-                        ],
-                        [
-                            (21, 'dynamixel', 1982),
-                            (1, 'mighty', 1024),
-                            (2, 'mighty', 918), 
-                            (3, 'mighty', 922)
-                        ]
-                    )
-                    time.sleep(1.0)
-
-                    # controller.move_to_position(
-                    #     [
-                    #         (1, 'dynamixel', 1806),
-                    #         (2, 'dynamixel', 2015),
-                    #         (3, 'dynamixel', 1176),
-                    #         (4, 'dynamixel', 2717),
-                    #         (5, 'dynamixel', 1317),
-                    #         (6, 'dynamixel', 1911)
-                    #     ],
-                    #     [
-                    #         (21, 'dynamixel', 1984),
-                    #         (1, 'mighty', 1024),
-                    #         (2, 'mighty', 918),
-                    #         (3, 'mighty', 921)
-                    #     ]
-                    # )
-                    # time.sleep(1.0)
-
-                    controller.move_to_position(
-                        [
-                            (1, 'dynamixel', 1831),
-                            (2, 'dynamixel', 2068),
-                            (3, 'dynamixel', 1435),
-                            (4, 'dynamixel', 2889),
-                            (5, 'dynamixel', 1380),
-                            (6, 'dynamixel', 1607)
-                        ],
-                        [
-                            (21, 'dynamixel', 1984),
-                            (1, 'mighty', 1024),
-                            (2, 'mighty', 919),
-                            (3, 'mighty', 922)
-                        ]
-                    )
-                    time.sleep(1.0)
-
-                    # controller.move_to_position(
-                    #     [
-                    #         (1, 'dynamixel', 1823),
-                    #         (2, 'dynamixel', 2001),
-                    #         (3, 'dynamixel', 970),
-                    #         (4, 'dynamixel', 2691),
-                    #         (5, 'dynamixel', 1297),
-                    #         (6, 'dynamixel', 2150)
-                    #     ],
-                    #     [
-                    #         (21, 'dynamixel', 1984),
-                    #         (1, 'mighty', 1024),
-                    #         (2, 'mighty', 919),
-                    #         (3, 'mighty', 921)
-                    #     ]
-                    # )
-
                 # Check Current Position
-                elif cmd == 'c':
+                elif cmd == 'check':
                     controller.check_current_position(
                         [
                             (1, 'dynamixel'), 
@@ -643,7 +461,7 @@ if __name__ == "__main__":
                     )
                 
                 # Make feasible random position and execute
-                elif cmd == 'r':
+                elif cmd == 'random':
                     controller._make_random_values_under_hard_limits(
                         [
                             (1, 'dynamixel'), 
@@ -662,7 +480,7 @@ if __name__ == "__main__":
                     )
                 
                 # Motion Capture
-                elif cmd == 'm':
+                elif cmd == 'motion_capture':
                     # capture motion with torque off.
                     controller.capture_motion(
                           [
@@ -682,7 +500,7 @@ if __name__ == "__main__":
                     )
                 
                 # Torque Off 
-                elif cmd == 'toff':
+                elif cmd == 'torque_off':
                     controller.nana_arm_handler.disableTorque(
                          [
                             (1, 'dynamixel'), 
@@ -701,7 +519,7 @@ if __name__ == "__main__":
                     )
 
                 # Torque On
-                elif cmd == 'ton':
+                elif cmd == 'torque_on':
                     controller.nana_arm_handler.enableTorque(
                          [
                             (1, 'dynamixel'), 
@@ -780,10 +598,6 @@ if __name__ == "__main__":
                         ]
                     )
 
-                # Quit
-                elif cmd == 'q':
-                    break
-                
                 # Debug
                 elif cmd == 'debug':
                     print("\n[Debug Mode] 포지션 값을 순서대로 입력하세요.")
@@ -815,6 +629,10 @@ if __name__ == "__main__":
                             print("[Error] 숫자만 입력 가능합니다.")
                     else:
                         print(f"[Error] 10개의 값이 필요합니다. (현재 {len(values)}개 입력됨)")
+                
+                # Quit
+                elif cmd == 'q':
+                    break
                 
                 
                 else:

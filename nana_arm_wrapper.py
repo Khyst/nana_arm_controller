@@ -89,5 +89,19 @@ class NanaArmWrapper:
         
         return position
     
+    def isMoving(self, commands):
+        """
+            Check if any of the actuators are currently moving.
+        """
+        for cmd in commands:
+            id, type, position = cmd
+            if type == 'dynamixel':
+                if self.dynamixel_sdk_handler.isMoving(id):
+                    return True
+            elif type == 'mighty':
+                if self.mightyzap_sdk_handler.isMoving(id, position):
+                    return True
+        return False
+    
 if __name__ == "__main__":
     pass

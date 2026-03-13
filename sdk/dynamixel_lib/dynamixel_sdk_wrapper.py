@@ -126,3 +126,7 @@ class DynamixelSDKWrapper:
     def getCurrentPosition(self, id):
         idx = self.dxl_ids.index(id)
         return self.dynamixel_sdk.read4ByteTxRx(id, self.dynamixel_control_tables[self.dxl_models[idx]].get('Present Position').get('address'))
+    
+    def isMoving(self, id):
+        idx = self.dxl_ids.index(id)
+        return self.dynamixel_sdk.read1ByteTxRx(id, self.dynamixel_control_tables[self.dxl_models[idx]].get('Moving').get('address')) == 1

@@ -54,3 +54,8 @@ class MightyZapSDKWrapper:
 
     def disableTorque(self, id):
         self.mightyzap_sdk.ForceEnable(id, False)
+
+    def isMoving(self, id, position):
+        current_position = self.readPosition(id)
+        return abs(current_position - position) > 10  # Threshold for considering it still moving
+        
