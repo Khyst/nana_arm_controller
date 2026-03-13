@@ -1,2 +1,2 @@
-- updated dxl control table list
-- update dxl_sdk_protocol list
+- dynamixel_sdk, mightyzap_sdk 업데이트 필요
+- mightyzap_sdk_wrapper, dynamixel_sdk_wrapper에서 모터 작동 중 필요한 기능에 대한 함수 생성 및 호출
