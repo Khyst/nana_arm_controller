@@ -1,0 +1,2 @@
+- updated dxl control table list
+- update dxl_sdk_protocol list

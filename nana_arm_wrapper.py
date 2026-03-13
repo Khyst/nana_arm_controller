@@ -15,7 +15,7 @@ class NanaArmWrapper:
         """
         self.serial_port = serial_port
         self.baudrate = baudrate
-        self.timeout = 0.1
+        self.timeout = 0.0
         
         self.dxl_models = dxl_models
         self.mighty_models = mighty_models
