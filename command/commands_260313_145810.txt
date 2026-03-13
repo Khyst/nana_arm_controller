@@ -1,0 +1,2 @@
+[(1, 'dynamixel', 1961), (2, 'dynamixel', 1874), (3, 'dynamixel', 1110), (4, 'dynamixel', 2871), (5, 'dynamixel', 1395), (6, 'dynamixel', 2018), (21, 'dynamixel', 1902), (1, 'mighty', 1024), (2, 'mighty', 918), (3, 'mighty', 922)]
+[(1, 'dynamixel', 1927), (2, 'dynamixel', 2054), (3, 'dynamixel', 1500), (4, 'dynamixel', 2995), (5, 'dynamixel', 1384), (6, 'dynamixel', 1585), (21, 'dynamixel', 1902), (1, 'mighty', 1024), (2, 'mighty', 919), (3, 'mighty', 922)]

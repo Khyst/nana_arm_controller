@@ -1,0 +1,5 @@
+[(1, 'dynamixel', 1806), (2, 'dynamixel', 2015), (3, 'dynamixel', 1176), (4, 'dynamixel', 2717), (5, 'dynamixel', 1317), (6, 'dynamixel', 1911), (21, 'dynamixel', 1984), (1, 'mighty', 1024), (2, 'mighty', 918), (3, 'mighty', 921)]
+[(1, 'dynamixel', 1831), (2, 'dynamixel', 2068), (3, 'dynamixel', 1435), (4, 'dynamixel', 2889), (5, 'dynamixel', 1380), (6, 'dynamixel', 1607), (21, 'dynamixel', 1984), (1, 'mighty', 1024), (2, 'mighty', 919), (3, 'mighty', 922)]
+[(1, 'dynamixel', 1823), (2, 'dynamixel', 2001), (3, 'dynamixel', 970), (4, 'dynamixel', 2691), (5, 'dynamixel', 1297), (6, 'dynamixel', 2150), (21, 'dynamixel', 1984), (1, 'mighty', 1024), (2, 'mighty', 919), (3, 'mighty', 921)]
+[(1, 'dynamixel', 2119), (2, 'dynamixel', 3113), (3, 'dynamixel', 1805), (4, 'dynamixel', 2220), (5, 'dynamixel', 1936), (6, 'dynamixel', 1759), (21, 'dynamixel', 1982), (1, 'mighty', 1024), (2, 'mighty', 918), (3, 'mighty', 922)]
+[(1, 'dynamixel', 2137), (2, 'dynamixel', 3046), (3, 'dynamixel', 2013), (4, 'dynamixel', 2078), (5, 'dynamixel', 1173), (6, 'dynamixel', 2119), (21, 'dynamixel', 1974), (1, 'mighty', 1024), (2, 'mighty', 918), (3, 'mighty', 922)]
