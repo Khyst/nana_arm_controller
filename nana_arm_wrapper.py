@@ -8,7 +8,7 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) # 라이브러리 경�
 
 class NanaArmWrapper:
     
-    def __init__(self, serial_port, baudrate, dxl_models, mighty_models):
+    def __init__(self, serial_port, baudrate, dxl_models, mighty_models, dxl_ids, mighty_ids):
         """
             NANA Arm과 Hand의 Low-Level 제어를 담당하는 Wrapper 클래스 (Low-level Interface)
             - serial_handler를 통해 실제 액추에이터와 통신을 함으로써 Arm과 Hand를 제어하는 역할을 수행.
@@ -19,6 +19,8 @@ class NanaArmWrapper:
         
         self.dxl_models = dxl_models
         self.mighty_models = mighty_models
+        self.dxl_ids = dxl_ids
+        self.mighty_ids = mighty_ids
 
         self.serial_handler = None
 
@@ -30,13 +32,32 @@ class NanaArmWrapper:
             print(f"[Error] Failed to establish serial connection: {e}")
             raise e
         
-        self.mightyzap_sdk_handler = MightyZapSDKWrapper(self.serial_handler, self.mighty_models)
-        self.dynamixel_sdk_handler = DynamixelSDKWrapper(self.serial_handler, self.dxl_models)
-
+        self.dynamixel_sdk_handler = DynamixelSDKWrapper(self.serial_handler, self.dxl_models, self.dxl_ids)
+        self.mightyzap_sdk_handler = MightyZapSDKWrapper(self.serial_handler, self.mighty_models, self.mighty_ids)
+        
     def __close__(self):
         if self.serial_handler and self.serial_handler.is_open:
             self.serial_handler.close()
             print(f"[Info] Serial connection on {self.serial_port} closed.")
+
+    def enableTorque(self, sources):
+        for source in sources:
+            id, type = source
+
+            if type == 'dynamixel':
+                self.dynamixel_sdk_handler.enableTorque(id)
+
+            elif type == 'mighty':
+                self.mightyzap_sdk_handler.enableTorque(id)
+
+    def disableTorque(self, sources):
+        for source in sources:
+            id, type = source
+            if type == 'dynamixel':
+                self.dynamixel_sdk_handler.disableTorque(id)
+
+            elif type == 'mighty':
+                self.mightyzap_sdk_handler.disableTorque(id)
 
     def writePosition(self, commands):
         
@@ -51,6 +72,8 @@ class NanaArmWrapper:
 
     def readPosition(self, sources):
         
+        position = []
+
         for src in sources:
             id, type = src
             
@@ -61,6 +84,10 @@ class NanaArmWrapper:
             elif type == 'dynamixel':
                 current_position = self.dynamixel_sdk_handler.readPosition(id)
                 print(f"[Info] Verified Dynamixel ID {id} position: {current_position}")
+
+            position.append((id, type, current_position))
+        
+        return position
     
 if __name__ == "__main__":
     pass

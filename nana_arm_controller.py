@@ -3,7 +3,9 @@ import sys
 import time
 import yaml
 import argparse
+import random
 
+from datetime import datetime
 from typing import Any, Dict
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) # 라이브러리 경로 설정
@@ -24,7 +26,7 @@ class NanaArmController:
 
         self.load_and_declare_config()
 
-        self.nana_arm_handler = NanaArmWrapper(serial_port=self.port, baudrate=self.baudrate, dxl_models=self.dxl_models, mighty_models=self.mighty_models)
+        self.nana_arm_handler = NanaArmWrapper(serial_port=self.port, baudrate=self.baudrate, dxl_models=self.dxl_models, mighty_models=self.mighty_models, dxl_ids=self.dxl_ids, mighty_ids=self.mighty_ids)
 
         print("[Info] NANA Arm with Hand initialized successfully.")
 
@@ -57,6 +59,98 @@ class NanaArmController:
         print(f"       IDs: {self.mighty_ids}")
         print(f"       Models: {self.mighty_models}")
         print(f"       Soft Limits (Max/Min): {self.mighty_soft_position_max_limits} / {self.mighty_soft_position_min_limits}")
+
+    def _is_position_within_limits(self, command):
+        """
+            주어진 명령이 설정된 소프트 리밋 내에 있는지 확인하는 함수
+            * command 형식 : [(id, type, position),  (id, type, position), ...]
+        """
+
+        for cmd in command:
+            id, type, position = cmd
+            
+            if type == 'dynamixel':
+                idx = self.dxl_ids.index(id)
+                if not (self.dxl_soft_position_min_limits[idx] <= position <= self.dxl_soft_position_max_limits[idx]):
+                    print(f"[Warning] Command for Dynamixel ID {id} is out of soft limits: {position} (Limits: {self.dxl_soft_position_min_limits[idx]} - {self.dxl_soft_position_max_limits[idx]})")
+                    return False
+            
+            elif type == 'mighty':
+                idx = self.mighty_ids.index(id)
+                if not (self.mighty_soft_position_min_limits[idx] <= position <= self.mighty_soft_position_max_limits[idx]):
+                    print(f"[Warning] Command for Mighty ID {id} is out of soft limits: {position} (Limits: {self.mighty_soft_position_min_limits[idx]} - {self.mighty_soft_position_max_limits[idx]})")
+                    return False
+        
+        return True
+
+    def _make_random_values_under_hard_limits(self, arm_source, hand_source):
+        """
+            팔과 손에 있어서 가동 범위내 임의의 position을 포함헌 command를 생성해주는 함수
+        """
+        # make random arm_command from arm_source
+        arm_command = []
+        for source in arm_source:
+            id, type = source
+            if type == 'dynamixel':
+                idx = self.dxl_ids.index(id)
+                random_position = random.randint(self.dxl_hard_position_min_limits[idx], self.dxl_hard_position_max_limits[idx])
+                print(f"[Info] Random position for Dynamixel ID {id}: {random_position} (Hard Limits: {self.dxl_hard_position_min_limits[idx]} - {self.dxl_hard_position_max_limits[idx]})")
+            if type == 'mighty':
+                idx = self.mighty_ids.index(id)
+                random_position = random.randint(self.mighty_hard_position_min_limits[idx], self.mighty_hard_position_max_limits[idx])
+                print(f"[Info] Random position for MightyZap ID {id}: {random_position} (Hard Limits: {self.mighty_hard_position_min_limits[idx]} - {self.mighty_hard_position_max_limits[idx]})")
+
+            arm_command.append((id, type, random_position))
+
+        
+        # make random hand_command from hand_soruce
+        hand_command = []
+        for source in hand_source:
+            id, type = source
+            if type == 'dynamixel':
+                idx = self.dxl_ids.index(id)
+                random_position = random.randint(self.dxl_hard_position_min_limits[idx], self.dxl_hard_position_max_limits[idx])
+                print(f"[Info] Random position for Dynamixel ID {id}: {random_position} (Hard Limits: {self.dxl_hard_position_min_limits[idx]} - {self.dxl_hard_position_max_limits[idx]})")
+            if type == 'mighty':
+                idx = self.mighty_ids.index(id)
+                random_position = random.randint(self.mighty_hard_position_min_limits[idx], self.mighty_hard_position_max_limits[idx])
+                print(f"[Info] Random position for MightyZap ID {id}: {random_position} (Hard Limits: {self.mighty_hard_position_min_limits[idx]} - {self.mighty_hard_position_max_limits[idx]})")
+
+            hand_command.append((id, type, random_position))
+
+        self.move_to_position(arm_command, hand_command)
+
+    def _print_recorded_command(self, command):
+        """
+            Helper function for printing recorded command
+        """
+        print("Recorded Command:")
+        for item in command:
+            print(item)
+
+    def _save_commands(self, command):
+        """
+            Helper function for saving recorded command into file in commands/
+        """
+        # 1. Define and create the 'command' directory
+        save_dir = os.path.join(CURRENT_DIR, "command")
+        os.makedirs(save_dir, exist_ok=True)
+
+        # 2. Define and create filename with timestamp
+        timestamp = datetime.now().strftime("%y%m%d_%H%M%S")
+        filename = f"commands_{timestamp}.txt"
+        
+        #3. Define the full file path
+        file_path = os.path.join(save_dir, filename)
+        
+        # 4. Write the data to the file
+        try:
+            with open(file_path, "w", encoding="utf-8") as f:
+                for item in command:
+                    f.write(f"{item}\n")
+            print(f"Successfully saved to: {file_path}")
+        except Exception as e:
+            print(f"Error saving file: {e}")
 
     def load_and_declare_config(self):
         """
@@ -109,9 +203,15 @@ class NanaArmController:
         """
         print(f"[Info] Moving to positions: Arm: {arm_command}, Hand: {hand_command}")
 
-        commands = arm_command + hand_command
+        commands = arm_command + hand_command # List Concatenate
 
-        self.nana_arm_handler.writePosition(commands)
+        if not self._is_position_within_limits(commands):
+            print("[Error] One or more commands are out of soft limits. Aborting move.")
+            return
+
+        print(commands)
+
+        # self.nana_arm_handler.writePosition(commands)
 
     # Check current position
     def check_current_position(self, arm_source, hand_source):
@@ -120,10 +220,44 @@ class NanaArmController:
             * source 형식 : [(id, type), (id_type), ]
         """
 
-        sources = arm_source + hand_source
+        sources = arm_source + hand_source # List Concatenate
 
-        self.nana_arm_handler.readPosition(sources)
-            
+        return self.nana_arm_handler.readPosition(sources)
+
+    # Capture Motion with Torque Disable
+    def capture_motion(self, arm_source, hand_source):
+        """
+            Torque를 Disable한 상태로 관절을 직접 움직이며 Encoder 값을 기록하기 위한 함수
+        """
+
+        # 1. Disable Toruqe
+        sources = arm_source + hand_source
+        self.nana_arm_handler.disableTorque(sources)
+
+
+        # 2. record commands repeately
+        recorded_commands = []
+
+        step = 0
+        while True:
+            user_input = input(f"{step}번째 모션 캡처? (Y: 캡처,  X: 종료)")
+            print("==========================================================================")
+
+            if(user_input == 'X' or user_input =='x'):
+                break
+
+            # 2.1 get the current positions from dxl and mighty zap
+            command = self.check_current_position(arm_source, hand_source)
+            self._print_recorded_command(command)
+            recorded_commands.append(command)
+            step = step + 1
+
+        # 3. Enable Torque
+        self.nana_arm_handler.enableTorque(sources)
+
+        # 4. Save Commands into File
+        self._save_commands(recorded_commands)
+
 if __name__ == "__main__":
     
     """
@@ -150,6 +284,7 @@ if __name__ == "__main__":
 
                 cmd = input("명령 입력 (a: 첫번 째 모션, b: 현 위치 확인, q: 종료): ").lower()
                 
+                # Move Option A
                 if cmd == 'a':
                     controller.move_to_position(
                         [
@@ -168,24 +303,26 @@ if __name__ == "__main__":
                         ]
                     )
                 
+                # Move Option B
                 elif cmd == 'b':
                     controller.move_to_position(
                         [
                             (1, 'dynamixel', 2000), 
                             (2, 'dynamixel', 1200), 
-                            (3, 'dynamixel', 1500), 
-                            (4, 'dynamixel', 1500), 
-                            (5, 'dynamixel', 1500), 
+                            (3, 'dynamixel', 2000), 
+                            (4, 'dynamixel', 3300), 
+                            (5, 'dynamixel', 1200), 
                             (6, 'dynamixel', 2000)
                         ],
                         [
-                            (21,'dynamixel', 2000), 
+                            (21,'dynamixel', 1300), 
                             (1, 'mighty', 600), 
                             (2, 'mighty', 600), 
                             (3, 'mighty', 600)
                         ]
                     )
                     
+                # Check Current Position
                 elif cmd == 'c':
                     controller.check_current_position(
                         [
@@ -204,8 +341,49 @@ if __name__ == "__main__":
                         ]
                     )
                 
+                # Make feasible random position and execute
+                elif cmd == 'r':
+                    controller._make_random_values_under_hard_limits(
+                        [
+                            (1, 'dynamixel'), 
+                            (2, 'dynamixel'), 
+                            (3, 'dynamixel'), 
+                            (4, 'dynamixel'), 
+                            (5, 'dynamixel'), 
+                            (6, 'dynamixel')
+                        ],
+                        [
+                            (21, 'dynamixel'),
+                            (1, 'mighty'),
+                            (2, 'mighty'),
+                            (3, 'mighty')
+                        ]
+                    )
+                
+                # Motion Capture
+                elif cmd == 'm':
+                    # capture motion with torque off.
+                    controller.capture_motion(
+                          [
+                            (1, 'dynamixel'), 
+                            (2, 'dynamixel'), 
+                            (3, 'dynamixel'), 
+                            (4, 'dynamixel'), 
+                            (5, 'dynamixel'), 
+                            (6, 'dynamixel')
+                        ],
+                        [
+                            (21, 'dynamixel'),
+                            (1, 'mighty'),
+                            (2, 'mighty'),
+                            (3, 'mighty')
+                        ]
+                    )
+                
+                # Quit
                 elif cmd == 'q':
                     break
+                
                 else:
                     print("유효하지 않은 값입니다. 다시 입력해주세요!")
 

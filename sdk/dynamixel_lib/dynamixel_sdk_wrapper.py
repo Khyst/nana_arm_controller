@@ -11,10 +11,11 @@ class DynamixelSDKWrapper:
         최종 packet, port 통신을 통해 Hardware에 직접 제어하는 부분에 대한 Wrapper
     """
     
-    def __init__(self, serial_handler, dxl_models):
+    def __init__(self, serial_handler, dxl_models, dxl_ids):
         
         self.serial_handler = serial_handler
         self.dxl_models = dxl_models
+        self.dxl_ids = dxl_ids
         
         self.dynamixel_control_tables = self._load_control_table(self.dxl_models)
         self.dynamixel_sdk = DynamixelSDK(serial_handler, protocol_version=2.0)
@@ -73,34 +74,55 @@ class DynamixelSDKWrapper:
             Dynamixel SDK 초기 설정을 수행하는 함수
         """
         print(f"[Info] Performing initial setup for Dynamixel SDK")
-        
-        # Torque on for all Dynamixel motors
-        for model in self.dxl_models:
-            for id in range(1, 7): # Assuming IDs 1-6 for arm joints
-                self.dynamixel_sdk.write1ByteTxRx(id, self.dynamixel_control_tables[model].get('Torque Enable').get('address'), 1)
-                print(f"[Info] Enabled torque for Dynamixel ID {id} (Model: {model})")
 
-        # Set Profile velocity 40 and acceleration 80 for all Dynamixel motors
-        for model in self.dxl_models:
-            for id in range(1, 7): # Assuming IDs 1-6 for arm joints
-                self.dynamixel_sdk.write4ByteTxRx(id, self.dynamixel_control_tables[model].get('Profile Velocity').get('address'), 40)
-                self.dynamixel_sdk.write4ByteTxRx(id, self.dynamixel_control_tables[model].get('Profile Acceleration').get('address'), 80)
-                print(f"[Info] Set Profile Velocity to 40 and Acceleration to 80 for Dynamixel ID {id} (Model: {model})")
+        for id in self.dxl_ids:
+            idx = self.dxl_ids.index(id)
+            print(f"[Info] Initializing Dynamixel ID {id} (Model: {self.dxl_models[idx]})")
 
-        for model in self.dxl_models:
-            for id in range(1, 7): # Assuming IDs 1-6 for arm joints
-                current_position = self.dynamixel_sdk.read4ByteTxRx(id, self.dynamixel_control_tables[model].get('Present Position').get('address'))
-                print(f"[Info] Initial position of Dynamixel ID {id} (Model: {model}): {current_position}")
+            # Torque Enable
+            self.enableTorque(id)
+            print(f"[Info] Enabled torque for Dynamixel ID {id} (Model: {self.dxl_models[idx]})")
+
+            # Set Profile velocity 40 and acceleration 80
+            self.setProfileVelocity(id, 40)
+            self.setProfileAcceleration(id, 80)
+            print(f"[Info] Set Profile Velocity to 40 and Acceleration to 80 for Dynamixel ID {id} (Model: {self.dxl_models[idx]})")
 
     def writePosition(self, id, position):
         print(f"[DynamixelSDKWrapper] Writing position {position} to ID {id}")
-        self.dynamixel_sdk.write4ByteTxRx(id, self.dynamixel_control_tables[self.dxl_models[id]].get('Goal Position').get('address'), position)
+        self.setGoalPosition(id, position)
+        
         
     def readPosition(self, id):
-        print(f"[DynamixelSDKWrapper] Reading position from Dynamixel ID {id}")
-        return self.dynamixel_sdk.read4ByteTxRx(id, self.dynamixel_control_tables[self.dxl_models[id]].get('Present Position').get('address'))
-        # Torque off for all Dynamixel motors
-        for model in self.dxl_models:
-            for id in range(1, 7): # Assuming IDs 1-6 for arm joints
-                self.dynamixel_sdk.write1ByteTxRx(id, self.dynamixel_control_tables[model].get('Torque Enable').get('address'), 0)
-                print(f"[Info] Disabled torque for Dynamixel ID {id} (Model: {model})")
+
+        position = self.getCurrentPosition(id)[0]
+
+        print(f"[DynamixelSDKWrapper] Reading position from Dynamixel ID {id} is {position}")
+
+        return position
+        
+    
+    """ Helper Function """
+    def enableTorque(self, id):
+        idx = self.dxl_ids.index(id)
+        self.dynamixel_sdk.write1ByteTxRx(id, self.dynamixel_control_tables[self.dxl_models[idx]].get('Torque Enable').get('address'), 1)
+
+    def disableTorque(self, id):
+        idx = self.dxl_ids.index(id)
+        self.dynamixel_sdk.write1ByteTxRx(id, self.dynamixel_control_tables[self.dxl_models[idx]].get('Torque Enable').get('address'), 0)
+    
+    def setProfileVelocity(self, id, value):
+        idx = self.dxl_ids.index(id)
+        self.dynamixel_sdk.write4ByteTxRx(id, self.dynamixel_control_tables[self.dxl_models[idx]].get('Profile Velocity').get('address'), value)
+        
+    def setProfileAcceleration(self, id, value):
+        idx = self.dxl_ids.index(id)
+        self.dynamixel_sdk.write4ByteTxRx(id, self.dynamixel_control_tables[self.dxl_models[idx]].get('Profile Acceleration').get('address'), value)
+
+    def setGoalPosition(self, id, value):
+        idx = self.dxl_ids.index(id)
+        self.dynamixel_sdk.write4ByteTxRx(id, self.dynamixel_control_tables[self.dxl_models[idx]].get('Goal Position').get('address'), value)
+
+    def getCurrentPosition(self, id):
+        idx = self.dxl_ids.index(id)
+        return self.dynamixel_sdk.read4ByteTxRx(id, self.dynamixel_control_tables[self.dxl_models[idx]].get('Present Position').get('address'))

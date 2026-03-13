@@ -1,0 +1,1 @@
+[(1, 'dynamixel', 2142), (2, 'dynamixel', 1472), (3, 'dynamixel', 2059), (4, 'dynamixel', 3598), (5, 'dynamixel', 1223), (6, 'dynamixel', 2093), (21, 'dynamixel', 1495), (1, 'mighty', 1033), (2, 'mighty', 194), (3, 'mighty', 199)]

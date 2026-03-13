@@ -186,18 +186,7 @@ class MightyZapSDK:
             if timeout == 1:
                 return self.rx_buffer[6]
             else :
-                return -1
-
-    def Write_Addr(self, bID,  addr,  size,  data):
-        if size == 2:
-            pByte=[0]*2 
-            pByte[0]=(data&0x00ff)
-            pByte[1]=(data//256)
-            self.write_data(bID,addr,pByte,2)				
-        else:
-            pByte=[0]*1
-            pByte[0] = data
-            self.write_data(bID,addr,pByte,1)					
+                return -1				
 
     def WritePacket(self, buff, size):
         """Write raw bytes from buff to serial (size bytes)."""
