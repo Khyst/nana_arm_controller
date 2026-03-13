@@ -1,5 +1,5 @@
 {
     "description": "팔 벌리기 (Stretch)",
-    "arm": [[1, 2000], [2, 2000], [3, 2000], [4, 3000], [5, 2100], [6, 2100]],
-    "hand": [[21, 1020], [1, 1048], [2, 920], [3, 920]]
+    "arm": [[1, "dynamixel", 2000], [2, "dynamixel", 2000], [3, "dynamixel", 2000], [4, "dynamixel", 3000], [5, "dynamixel", 2100], [6, "dynamixel", 2100]],
+    "hand": [[21, "dynamixel", 1020], [1, "mighty", 1048], [2, "mighty", 920], [3, "mighty", 920]]
 }

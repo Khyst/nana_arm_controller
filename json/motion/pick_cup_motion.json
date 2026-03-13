@@ -1,22 +1,22 @@
 [
     {
         "description": "팔 벌리기",
-        "arm": [[1, 2000], [2, 2000], [3, 2000], [4, 3000], [5, 2100], [6, 2100]],
-        "hand": [[21, 1020], [1, 1048], [2, 920], [3, 920]]
+        "arm": [[1, "dynamixel", 2000], [2, "dynamixel", 2000], [3, "dynamixel", 2000], [4, "dynamixel", 3000], [5, "dynamixel", 2100], [6, "dynamixel", 2100]],
+        "hand": [[21, "dynamixel", 1020], [1, "mighty", 1048], [2, "mighty", 920], [3, "mighty", 920]]
     },
     {
         "description": "물체 접근",
-        "arm": [[1, 1868], [2, 1316], [3, 1289], [4, 3544], [5, 1932], [6, 1435]],
-        "hand": [[21, 1021], [1, 1024], [2, 917], [3, 924]]
+        "arm": [[1, "dynamixel", 1868], [2, "dynamixel", 1316], [3, "dynamixel", 1289], [4, "dynamixel", 3544], [5, "dynamixel", 1932], [6, "dynamixel", 1435]],
+        "hand": [[21, "dynamixel", 1021], [1, "mighty", 1024], [2, "mighty", 917], [3, "mighty", 924]]
     },
     {
         "description": "그립 준비",
-        "arm": [[1, 1752], [2, 1356], [3, 1799], [4, 3871], [5, 1512], [6, 1059]],
-        "hand": [[21, 2048], [1, 1024], [2, 917], [3, 925]]
+        "arm": [[1, "dynamixel", 1752], [2, "dynamixel", 1356], [3, "dynamixel", 1799], [4, "dynamixel", 3871], [5, "dynamixel", 1512], [6, "dynamixel", 1059]],
+        "hand": [[21, "dynamixel", 2048], [1, "mighty", 1024], [2, "mighty", 917], [3, "mighty", 925]]
     },
     {
         "description": "물체 파지(Clamping)",
-        "arm": [[1, 1752], [2, 1356], [3, 1799], [4, 3871], [5, 1512], [6, 1059]],
-        "hand": [[21, 2048], [1, 460], [2, 260], [3, 260]]
+        "arm": [[1, "dynamixel", 1752], [2, "dynamixel", 1356], [3, "dynamixel", 1799], [4, "dynamixel", 3871], [5, "dynamixel", 1512], [6, "dynamixel", 1059]],
+        "hand": [[21, "dynamixel", 2048], [1, "mighty", 460], [2, "mighty", 260], [3, "mighty", 260]]
     }
 ]

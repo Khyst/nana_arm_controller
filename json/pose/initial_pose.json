@@ -1,5 +1,5 @@
 {
     "description": "기본 자세 (Initial Pose)",
-    "arm": [[1, 2001], [2, 1970], [3, 2017], [4, 2935], [5, 1340], [6, 1928]],
-    "hand": [[21, 1020], [1, 1028], [2, 920], [3, 920]]
+    "arm": [[1, "dynamixel", 2001], [2, "dynamixel", 1970], [3, "dynamixel", 2017], [4, "dynamixel", 2935], [5, "dynamixel", 1340], [6, "dynamixel", 1928]],
+    "hand": [[21, "dynamixel", 1020], [1, "mighty", 1028], [2, "mighty", 920], [3, "mighty", 920]]
 }
