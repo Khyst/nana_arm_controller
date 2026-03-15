@@ -222,10 +222,10 @@ class NanaArmController:
         # 공통 설정 로드
         self.port = data.get('port', '/dev/ttyUSB0')
         self.baudrate = data.get('baud_rate', 115200) # YAML의 baud_rate와 일치시킴
-        self.protocol_version = data.get('protocol_version', 2.0)
-
+        
         # --- DXL 설정 로드 ---
         dxl_data = data.get('dxl', {})
+        self.protocol_version = dxl_data.get('protocol_version', 2.0)
         self.number_of_dxl = int(dxl_data.get('number_of_dxl', 0))
         self.dxl_ids = dxl_data.get('dxl_ids', [])
         self.dxl_names = dxl_data.get('dxl_names', [])

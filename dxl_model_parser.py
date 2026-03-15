@@ -71,7 +71,7 @@ if __name__ == "__main__":
     parser_arg.add_argument("--model", type=str, default="xm540_w270")
     args = parser_arg.parse_args()
 
-    dxl_parser = DynamixelModelParser(path=f"./control_tables/{args.model}.model")
+    dxl_parser = DynamixelModelParser(path=f"./control_tables/dynamixel/{args.model}.model")
     
     # 제어 테이블 객체 반환받기
     control_config = dxl_parser.parse_file()
