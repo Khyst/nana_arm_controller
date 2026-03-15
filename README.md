@@ -17,6 +17,7 @@ pyyaml
 git clone https://github.com/khyst/nana_arm_controller.git
 
 ### Script 파일별 설명
+---
 ```Python
     python3 nana_arm_controller.py # High Level 단에서 팔의 제어를 하도록 하는 Application 실행
 
@@ -33,6 +34,7 @@ git clone https://github.com/khyst/nana_arm_controller.git
 ```
 
 ### config
+---
 - 로봇 암 및 그리퍼 하드웨어의 전반적인 통신 설정과 액추에이터 사양을 정의하는 메인 설정 파일
   - Common Settings
     - port : 장치 연결 경로 (ex: /dev/ttyUSB0)
@@ -51,6 +53,7 @@ git clone https://github.com/khyst/nana_arm_controller.git
     - limits : 각 액추에이터의 스트로크 제한을 위한 하드웨어 및 소프트웨어 위치 제한 값 설정
 
 ### json
+---
 - motion/
     - 로봇 팔이 수행해야 할 모션에 대한 Pose sequence(ex.pick_cup_motion.json)를 정의하는 폴더. 추후, 이를 통해 실제 로봇의 실시간 제어가 이루어짐.
 
@@ -66,6 +69,7 @@ git clone https://github.com/khyst/nana_arm_controller.git
         ]
     ```
 
+<br>
 
 - pose/
     - 로봇 팔이 움직여야 할 포즈에 대한 Pose(ex.initial_pose.json, stretch_pose.json)를 정의하는 폴더, 추후 이 포즈로 로봇의 실시간 제어가 이루어짐
@@ -78,8 +82,10 @@ git clone https://github.com/khyst/nana_arm_controller.git
     ```
 
 ### control_tables
+---
 - 각 액추에이터 별 상이한 Control Table 정보를 포함하는 파일을 로드 (ex. control_tables/dynamixel/xm540_w270.model)
 
 
 ### E.T.C. 
+---
 - command/ (Deprecated, 현재 사용 안함)
