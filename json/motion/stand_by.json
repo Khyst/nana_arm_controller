@@ -1,0 +1,17 @@
+[
+  {
+    "description": "첫 번째 큰 궤적 이동",
+    "arm": [[1,"dynamixel",1915],[2,"dynamixel",1882],[3,"dynamixel",1200],[4,"dynamixel",3300],[5,"dynamixel",1328],[6,"dynamixel",1800]],
+    "hand": [[21,"dynamixel",1052],[1,"mighty",1990],[2,"mighty",900],[3,"mighty",900]]
+  },
+  {
+    "description": "두번째 큰 궤적",
+    "arm": [[1,"dynamixel",1915],[2,"dynamixel",1882],[3,"dynamixel",796],[4,"dynamixel",2900],[5,"dynamixel",1328],[6,"dynamixel",2392]],
+    "hand": [[21,"dynamixel",1052],[1,"mighty",1990],[2,"mighty",900],[3,"mighty",900]]
+  },
+  {
+    "description": "최종 준비자세",
+    "arm": [[1, "dynamixel", 2049], [2, "dynamixel", 2047], [3, "dynamixel", 2046], [4, "dynamixel", 2050], [5, "dynamixel", 1197], [6, "dynamixel", 2078]],
+    "hand": [[21, "dynamixel", 1026], [1, "mighty", 2000], [2, "mighty", 920], [3, "mighty", 920]]
+  }
+]

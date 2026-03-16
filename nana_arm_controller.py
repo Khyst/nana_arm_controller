@@ -280,7 +280,8 @@ class NanaArmController:
             print(f"\n\n[Info] Executing step: {description}")
             print(" ==========================================================================")
             self.move_to_position(arm_command, hand_command)
-            self.wait_until_reach_position(arm_command, hand_command)
+            # self.wait_until_reach_position(arm_command, hand_command)
+            time.sleep(1.3)
             print(" ==========================================================================")
 
         print(f"[Info] Motion execution completed.")
@@ -376,10 +377,28 @@ class NanaArmController:
         # 4. Save Commands into File
         self._save_commands(recorded_commands)
 
+def debug_mode(controller, motion_file):
+    motion_data = controller._load_motion_data(motion_file)
+
+    if motion_data is None:
+        print(f"[Error] {motion_file} 모션 데이터를 불러오는데 실패했습니다. 파일 이름과 경로를 확인해주세요.")
+        print(f"path: {os.path.join(CURRENT_DIR, 'json', 'motion', motion_file + '.json')}")
+        sys.exit(1)
+
+    controller.execute_motion(motion_data)
+    sys.exit(0)
+
 if __name__ == "__main__":
 
     try:
         controller = NanaArmController()
+
+        parser = argparse.ArgumentParser(add_help=False)
+        parser.add_argument("motion_file", nargs="?", default="")
+        args, _ = parser.parse_known_args()
+
+        if args.motion_file:
+            debug_mode(controller, args.motion_file)
 
         while True:
 

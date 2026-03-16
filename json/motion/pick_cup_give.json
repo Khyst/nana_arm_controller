@@ -1,0 +1,27 @@
+[
+    {
+        "description": "Step 1: 초기 위치 및 중심 잡기",
+        "arm": [[1,"dynamixel",2050],[2,"dynamixel",2047],[3,"dynamixel",2044],[4,"dynamixel",2049],[5,"dynamixel",1202],[6,"dynamixel",2080]],
+        "hand": [[21,"dynamixel",1027],[1,"mighty",2000],[2,"mighty",920],[3,"mighty",920]]
+    },
+    {
+        "description": "Step 2: 책상 높이로 이동",
+        "arm": [[1,"dynamixel",1915],[2,"dynamixel",1882],[3,"dynamixel",796],[4,"dynamixel",2900],[5,"dynamixel",1328],[6,"dynamixel",2392]],
+        "hand": [[21,"dynamixel",1052],[1,"mighty",2000],[2,"mighty",920],[3,"mighty",920]]
+    },
+    {
+        "description": "Step 3: 물체를 향해 뻗기",
+        "arm": [[1,"dynamixel",1915],[2,"dynamixel",1882],[3,"dynamixel",1200],[4,"dynamixel",3300],[5,"dynamixel",1328],[6,"dynamixel",1800]],
+        "hand": [[21,"dynamixel",2300],[1,"mighty",2000],[2,"mighty",920],[3,"mighty",920]]
+    },
+    {
+        "description": "Step 4: 물체를 잡기",
+        "arm": [[1,"dynamixel",1915],[2,"dynamixel",1882],[3,"dynamixel",1200],[4,"dynamixel",3300],[5,"dynamixel",1328],[6,"dynamixel",1800]],
+        "hand": [[21,"dynamixel",2300],[1,"mighty",500],[2,"mighty",260],[3,"mighty",260]]
+    },
+    {
+        "description": "Step 5: 물체를 건네기",
+        "arm": [[1,"dynamixel",1915],[2,"dynamixel",1882],[3,"dynamixel",1200],[4,"dynamixel",3300],[5,"dynamixel",1100],[6,"dynamixel",1200]],
+        "hand": [[21,"dynamixel",2300],[1,"mighty",500],[2,"mighty",260],[3,"mighty",260]]
+    }
+]

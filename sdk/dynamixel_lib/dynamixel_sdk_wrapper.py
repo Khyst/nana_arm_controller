@@ -30,8 +30,8 @@ class DynamixelSDKWrapper:
         """
 
         candidates = [
-            os.path.join(CURRENT_DIR, 'control_tables', f"{model_name}.model"),
-            os.path.join(CURRENT_DIR, 'src', 'control_tables', f"{model_name}.model"),
+            os.path.join(CURRENT_DIR, 'control_tables', 'dynamixel', f"{model_name}.model"),
+            os.path.join(CURRENT_DIR, 'src', 'control_tables', 'dynamixel', f"{model_name}.model"),
         ]
 
         for path in candidates:
@@ -84,9 +84,13 @@ class DynamixelSDKWrapper:
             print(f"[Info] Enabled torque for Dynamixel ID {id} (Model: {self.dxl_models[idx]})")
 
             # Set Profile velocity 40 and acceleration 80
-            self.setProfileVelocity(id, 40)
-            self.setProfileAcceleration(id, 80)
-            print(f"[Info] Set Profile Velocity to 40 and Acceleration to 80 for Dynamixel ID {id} (Model: {self.dxl_models[idx]})")
+            # self.setProfileVelocity(id, 40)
+            # self.setProfileAcceleration(id, 80)
+            
+            # ! Time based Drive Mode로 변경하면서 Profile Velocity: 3000(ms), Profile Acceleration: 2000(ms)으로 설정
+            self.setProfileVelocity(id, 1000)
+            self.setProfileAcceleration(id, 2000)
+            print(f"[Info] Set Profile Velocity to 3000 and Acceleration to 2000 for Dynamixel ID {id} (Model: {self.dxl_models[idx]})")
 
     def writePosition(self, id, position):
         print(f"[DynamixelSDKWrapper] Writing position {position} to ID {id}")
