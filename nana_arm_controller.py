@@ -280,7 +280,11 @@ class NanaArmController:
             print(f"\n\n[Info] Executing step: {description}")
             print(" ==========================================================================")
             self.move_to_position(arm_command, hand_command)
+
+            
+
             # self.wait_until_reach_position(arm_command, hand_command)
+
             time.sleep(1.3)
             print(" ==========================================================================")
 
@@ -375,7 +379,7 @@ class NanaArmController:
         self.nana_arm_handler.enableTorque(sources)
 
         # 4. Save Commands into File
-        self._save_commands(recorded_commands)
+        self._save_commands(recorded_commands, arm_source=arm_source, hand_source=hand_source)
 
 def debug_mode(controller, motion_file):
     motion_data = controller._load_motion_data(motion_file)
@@ -386,7 +390,8 @@ def debug_mode(controller, motion_file):
         sys.exit(1)
 
     controller.execute_motion(motion_data)
-    sys.exit(0)
+
+    return True
 
 if __name__ == "__main__":
 
@@ -398,7 +403,10 @@ if __name__ == "__main__":
         args, _ = parser.parse_known_args()
 
         if args.motion_file:
-            debug_mode(controller, args.motion_file)
+            debug_option = debug_mode(controller, args.motion_file)
+
+            if debug_option:
+                sys.exit(0)
 
         while True:
 
