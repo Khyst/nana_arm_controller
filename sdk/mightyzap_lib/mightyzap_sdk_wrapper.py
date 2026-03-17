@@ -6,12 +6,13 @@ class MightyZapSDKWrapper:
         최종 packet, port 통신을 통해 Hardware에 직접 제어하는 부분에 대한 Wrapper
     """
     
-    def __init__(self, serial_handler, mighty_models, mighty_ids):
+    def __init__(self, serial_handler, mighty_models, mighty_ids, mighty_params):
         """Initialize wrapper with a serial handler and create SDK instance."""
         
         self.serial_handler = serial_handler
         self.mighty_models = mighty_models
         self.mighty_ids = mighty_ids
+        self.mighty_params = mighty_params
 
         self.mightyzap_sdk = MightyZapSDK(serial_handler)
 

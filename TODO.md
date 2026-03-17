@@ -1,2 +1,3 @@
 - dynamixel_sdk, mightyzap_sdk 업데이트 필요
 - mightyzap_sdk_wrapper, dynamixel_sdk_wrapper에서 모터 작동 중 필요한 기능에 대한 함수 생성 및 호출
+- nana_arn_controller 커맨드에 있어서 encoder 값이 아닌 degree 단위로 입력하도록 변경이 필요함

@@ -1,0 +1,38 @@
+[
+  {
+    "description": "1",
+    "arm": [
+      [1, "dynamixel", 2045], [2, "dynamixel", 1973], [3, "dynamixel", 2020], [4, "dynamixel", 2127], [5, "dynamixel", 1287], [6, "dynamixel", 2020]
+    ],
+    "hand": [
+      [21, "dynamixel", 1024], [1, "mighty", 2000], [2, "mighty", 920], [3, "mighty", 926]
+    ]
+  },
+  {
+    "description": "2",
+    "arm": [
+      [1, "dynamixel", 2044], [2, "dynamixel", 2055], [3, "dynamixel", 938], [4, "dynamixel", 2011], [5, "dynamixel", 1307], [6, "dynamixel", 1880]
+    ],
+    "hand": [
+      [21, "dynamixel", 1024], [1, "mighty", 2000], [2, "mighty", 920], [3, "mighty", 926]
+    ]
+  },
+  {
+    "description": "3",
+    "arm": [
+      [1, "dynamixel", 2047], [2, "dynamixel", 2087], [3, "dynamixel", 1379], [4, "dynamixel", 2106], [5, "dynamixel", 1263], [6, "dynamixel", 1606]
+    ],
+    "hand": [
+      [21, "dynamixel", 1024], [1, "mighty", 2000], [2, "mighty", 920], [3, "mighty", 926]
+    ]
+  },
+  {
+    "description": "4",
+    "arm": [
+      [1, "dynamixel", 2047], [2, "dynamixel", 2087], [3, "dynamixel", 1366], [4, "dynamixel", 2104], [5, "dynamixel", 1263], [6, "dynamixel", 1607]
+    ],
+    "hand": [
+      [21, "dynamixel", 1024], [1, "mighty", 2000], [2, "mighty", 920], [3, "mighty", 926]
+    ]
+  }
+]

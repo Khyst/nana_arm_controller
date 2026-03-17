@@ -11,16 +11,17 @@ class DynamixelSDKWrapper:
         최종 packet, port 통신을 통해 Hardware에 직접 제어하는 부분에 대한 Wrapper
     """
     
-    def __init__(self, serial_handler, dxl_models, dxl_ids):
+    def __init__(self, serial_handler, dxl_models, dxl_ids, dxl_params):
         
         self.serial_handler = serial_handler
         self.dxl_models = dxl_models
         self.dxl_ids = dxl_ids
+        self.dxl_params = dxl_params
         
         self.dynamixel_control_tables = self._load_control_table(self.dxl_models)
         self.dynamixel_sdk = DynamixelSDK(serial_handler, protocol_version=2.0)
 
-        self._initial_setup()
+        self._initial_setup(dxl_params=self.dxl_params)
 
         print(f"[Info] Initialized DynamixelSDKWrapper with provided serial handler and model information")
 
@@ -69,7 +70,7 @@ class DynamixelSDKWrapper:
         
         return dynamixel_control_tables
     
-    def _initial_setup(self):
+    def _initial_setup(self, dxl_params):
         """
             Dynamixel SDK 초기 설정을 수행하는 함수
         """
@@ -83,14 +84,18 @@ class DynamixelSDKWrapper:
             self.enableTorque(id)
             print(f"[Info] Enabled torque for Dynamixel ID {id} (Model: {self.dxl_models[idx]})")
 
-            # Set Profile velocity 40 and acceleration 80
-            # self.setProfileVelocity(id, 40)
-            # self.setProfileAcceleration(id, 80)
-            
-            # ! Time based Drive Mode로 변경하면서 Profile Velocity: 3000(ms), Profile Acceleration: 2000(ms)으로 설정
-            self.setProfileVelocity(id, 1000)
-            self.setProfileAcceleration(id, 2000)
-            print(f"[Info] Set Profile Velocity to 3000 and Acceleration to 2000 for Dynamixel ID {id} (Model: {self.dxl_models[idx]})")
+            if dxl_params:
+                 # If parameters are provided, use them
+                profile_velocity = dxl_params.get('profile_velocity', 2000)
+                profile_acceleration = dxl_params.get('profile_acceleration', 3000)
+                self.setProfileVelocity(id, profile_velocity[idx])
+                self.setProfileAcceleration(id, profile_acceleration[idx])
+                print(f"[Info] Set Profile Velocity to {profile_velocity[idx]} and Acceleration to {profile_acceleration[idx]} for Dynamixel ID {id} (Model: {self.dxl_models[idx]})")
+            else:
+                print(f"[Info] No custom parameters provided for Dynamixel ID {id} (Model: {self.dxl_models[idx]}), using default Profile Velocity: 2000 and Acceleration: 3000")
+                self.setProfileVelocity(id, 2000)
+                self.setProfileAcceleration(id, 3000)
+                print(f"[Info] Set Profile Velocity to 2000 and Acceleration to 3000 for Dynamixel ID {id} (Model: {self.dxl_models[idx]})")
 
     def writePosition(self, id, position):
         print(f"[DynamixelSDKWrapper] Writing position {position} to ID {id}")

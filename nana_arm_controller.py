@@ -1,8 +1,11 @@
 import os
 import sys
 import time
+import math
+
 import yaml
 import json
+
 import select
 import random
 import argparse
@@ -28,11 +31,23 @@ class NanaArmController:
 
         self.load_and_declare_config()
 
-        self.nana_arm_handler = NanaArmWrapper(serial_port=self.port, baudrate=self.baudrate, dxl_models=self.dxl_models, mighty_models=self.mighty_models, dxl_ids=self.dxl_ids, mighty_ids=self.mighty_ids)
+        self.nana_arm_handler = NanaArmWrapper(serial_port=self.port, baudrate=self.baudrate, dxl_models=self.dxl_models, mighty_models=self.mighty_models, dxl_ids=self.dxl_ids, mighty_ids=self.mighty_ids, dxl_params=self.dxl_params, mighty_params=self.mighty_params)
 
         print("[Info] NANA Arm with Hand initialized successfully.")
 
-    # Helper Functions
+    def _encode_to_radian(self, encode):
+        return (encode - 2048) * math.pi / 2048
+
+    def _radian_to_degree(self, radian):
+        return radian * 180.0 / math.pi
+
+    def _degree_to_radian(self, degree):
+        return degree * math.pi / 180.0
+
+    def _radian_to_encode(self, radian):
+        return int(radian * 2048 / math.pi + 2048)
+
+    # Helper Functions to resolve config path
     def _resolve_config_path(self, file_name):
         """
             설정 파일의 경로를 찾는 Helper 함수
@@ -49,6 +64,7 @@ class NanaArmController:
         
         raise FileNotFoundError(f'{CONFIG_FILE_NAME} 파일을 찾을 수 없습니다.')
 
+    # Helper function to print loaded configuration
     def _print_config_info(self, config_path):
         """ 로드된 설정을 출력하는 헬퍼 함수 """
         print(f"[Info] Configuration loaded from {config_path}")
@@ -62,6 +78,55 @@ class NanaArmController:
         print(f"       Models: {self.mighty_models}")
         print(f"       Soft Limits (Max/Min): {self.mighty_soft_position_max_limits} / {self.mighty_soft_position_min_limits}")
 
+    # Load configuration from YAML file and declare necessary variables
+    def load_and_declare_config(self):
+        """
+            설정 파일을 로드하고, 필요한 변수들을 선언하는 함수
+        """
+        
+        config_path = self._resolve_config_path(CONFIG_FILE_NAME)
+
+        with open(config_path, 'r') as f:
+            data = yaml.safe_load(f)
+
+        # 공통 설정 로드
+        self.port = data.get('port', '/dev/ttyUSB0')
+        self.baudrate = data.get('baud_rate', 115200) # YAML의 baud_rate와 일치시킴
+        
+        # --- DXL 설정 로드 ---
+        dxl_data = data.get('dxl', {})
+        self.protocol_version = dxl_data.get('protocol_version', 2.0)
+        self.number_of_dxl = int(dxl_data.get('number_of_dxl', 0))
+        self.dxl_ids = dxl_data.get('dxl_ids', [])
+        self.dxl_names = dxl_data.get('dxl_names', [])
+        self.dxl_models = dxl_data.get('dxl_models', [])
+
+        self.dxl_params = dxl_data.get('dxl_params', {})
+
+        dxl_limits = dxl_data.get('limits', {})
+        self.dxl_hard_position_max_limits = dxl_limits.get('hard', {}).get('position', {}).get('max', [])
+        self.dxl_hard_position_min_limits = dxl_limits.get('hard', {}).get('position', {}).get('min', [])
+        self.dxl_soft_position_max_limits = dxl_limits.get('soft', {}).get('position', {}).get('max', [])
+        self.dxl_soft_position_min_limits = dxl_limits.get('soft', {}).get('position', {}).get('min', [])
+
+        # --- Mighty 설정 로드 ---
+        mighty_data = data.get('mighty', {})
+        self.number_of_mighty = mighty_data.get('number_of_mighty', 0)
+        self.mighty_ids = mighty_data.get('mighty_ids', [])
+        self.mighty_names = mighty_data.get('mighty_names', [])
+        self.mighty_models = mighty_data.get('mighty_models', [])
+
+        self.mighty_params = mighty_data.get('mighty_params', {})
+
+        mighty_limits = mighty_data.get('limits', {})
+        self.mighty_hard_position_max_limits = mighty_limits.get('hard', {}).get('position', {}).get('max', [])
+        self.mighty_hard_position_min_limits = mighty_limits.get('hard', {}).get('position', {}).get('min', [])
+        self.mighty_soft_position_max_limits = mighty_limits.get('soft', {}).get('position', {}).get('max', [])
+        self.mighty_soft_position_min_limits = mighty_limits.get('soft', {}).get('position', {}).get('min', [])
+
+        self._print_config_info(config_path)
+
+    # Check if the given command is within the defined soft limits
     def _is_position_within_limits(self, command):
         """
             주어진 명령이 설정된 소프트 리밋 내에 있는지 확인하는 함수
@@ -91,6 +156,7 @@ class NanaArmController:
         
         return True
 
+    # Generate random position values within hard limits for given arm and hand sources, and execute the move command
     def _make_random_values_under_hard_limits(self, arm_source, hand_source):
         """
             팔과 손에 있어서 가동 범위내 임의의 position을 포함헌 command를 생성해주는 함수
@@ -142,6 +208,7 @@ class NanaArmController:
 
         self.move_to_position(arm_command, hand_command)
 
+    # Helper function to print recorded command
     def _print_recorded_command(self, command):
         """
             Helper function for printing recorded command
@@ -150,6 +217,7 @@ class NanaArmController:
         for item in command:
             print(item)
 
+    # Helper function to save recorded command into json/motion/ as JSON, matching the format of `json/motion/pick_cup_motion.json`
     def _save_commands(self, command, arm_source=None, hand_source=None):
         """
             Helper function for saving recorded command into json/motion/ as JSON
@@ -191,6 +259,7 @@ class NanaArmController:
         except Exception as e:
             print(f"Error saving JSON file: {e}")
 
+    # Helper functions to load motion and pose data from json/motion/ and json/pose/ respectively, given the file name (without .json extension)
     def _load_motion_data(self, file_name):
         file_path = os.path.join(CURRENT_DIR, "json", "motion", file_name + ".json")
         
@@ -199,7 +268,8 @@ class NanaArmController:
                 return json.load(f)
         except Exception as e:
             return None
-        
+
+    # Helper function to load pose data from json/pose/ given the file name (without .json extension)
     def _load_pose_data(self, file_name):
         
         file_path = os.path.join(CURRENT_DIR, "json", "pose", file_name + ".json")
@@ -208,49 +278,6 @@ class NanaArmController:
                 return json.load(f)
         except Exception as e:
             return None
-
-    def load_and_declare_config(self):
-        """
-            설정 파일을 로드하고, 필요한 변수들을 선언하는 함수
-        """
-        
-        config_path = self._resolve_config_path(CONFIG_FILE_NAME)
-
-        with open(config_path, 'r') as f:
-            data = yaml.safe_load(f)
-
-        # 공통 설정 로드
-        self.port = data.get('port', '/dev/ttyUSB0')
-        self.baudrate = data.get('baud_rate', 115200) # YAML의 baud_rate와 일치시킴
-        
-        # --- DXL 설정 로드 ---
-        dxl_data = data.get('dxl', {})
-        self.protocol_version = dxl_data.get('protocol_version', 2.0)
-        self.number_of_dxl = int(dxl_data.get('number_of_dxl', 0))
-        self.dxl_ids = dxl_data.get('dxl_ids', [])
-        self.dxl_names = dxl_data.get('dxl_names', [])
-        self.dxl_models = dxl_data.get('dxl_models', [])
-
-        dxl_limits = dxl_data.get('limits', {})
-        self.dxl_hard_position_max_limits = dxl_limits.get('hard', {}).get('position', {}).get('max', [])
-        self.dxl_hard_position_min_limits = dxl_limits.get('hard', {}).get('position', {}).get('min', [])
-        self.dxl_soft_position_max_limits = dxl_limits.get('soft', {}).get('position', {}).get('max', [])
-        self.dxl_soft_position_min_limits = dxl_limits.get('soft', {}).get('position', {}).get('min', [])
-
-        # --- Mighty 설정 로드 ---
-        mighty_data = data.get('mighty', {})
-        self.number_of_mighty = mighty_data.get('number_of_mighty', 0)
-        self.mighty_ids = mighty_data.get('mighty_ids', [])
-        self.mighty_names = mighty_data.get('mighty_names', [])
-        self.mighty_models = mighty_data.get('mighty_models', [])
-
-        mighty_limits = mighty_data.get('limits', {})
-        self.mighty_hard_position_max_limits = mighty_limits.get('hard', {}).get('position', {}).get('max', [])
-        self.mighty_hard_position_min_limits = mighty_limits.get('hard', {}).get('position', {}).get('min', [])
-        self.mighty_soft_position_max_limits = mighty_limits.get('soft', {}).get('position', {}).get('max', [])
-        self.mighty_soft_position_min_limits = mighty_limits.get('soft', {}).get('position', {}).get('min', [])
-
-        self._print_config_info(config_path)
 
     # Motion Service Functions
     def move_to_position(self, arm_command, hand_command):
@@ -320,8 +347,8 @@ class NanaArmController:
 
             time.sleep(0.01)
             
-    # Check current position
-    def check_current_position(self, arm_source, hand_source):
+    # get current position
+    def get_position(self, arm_source, hand_source):
         """
             현재 관절 위치를 읽어오는 함수
             * source 형식 : [(id, type), (id_type), ]
@@ -331,46 +358,81 @@ class NanaArmController:
 
         return self.nana_arm_handler.readPosition(sources)
 
+    # Check Menu for getting current position interactively (Press Enter to sample, 'q' to quit)
+    def check_menu(self, arm_source, hand_source):
+
+        print("[Info] Interactive check mode. Press Enter to read positions, or type 'q' then Enter to return to menu.")
+
+        step = 0
+
+        try:
+            while True:
+                try:
+                    line = input("Press Enter to sample positions, or 'q' then Enter to quit: ")
+                except EOFError:
+                    print("[Info] EOF received. Exiting interactive check.")
+                    break
+
+                if line is None:
+                    continue
+
+                s = line.strip()
+                if s in ('q', 'Q'):
+                    print("[Info] Exiting interactive check.")
+                    break
+
+                # empty Enter -> perform check and print result
+                positions = controller.get_position(arm_source, hand_source)
+                controller._print_recorded_command(positions)
+                step += 1
+                print(f"Sample #{step} captured.")
+
+        except KeyboardInterrupt:
+            print("[Info] KeyboardInterrupt received. Returning to menu.")
+
     # Capture Motion with Torque Disable every 2.0 seconds, until user presses Enter or 'q'/'Q'
     def motion_capture(self, arm_source, hand_source, timeout=2.0):
         """
             Torque를 Disable한 상태로 관절을 직접 움직이며 Encoder 값을 기록하기 위한 함수
         """
+        # NOTE: Deprecated periodic automatic capture. New behavior:
+        # Capture a single frame when the user presses Enter. Type 'q' or 'Q' then Enter to stop.
 
-        # 1. Disable Toruqe
+        # 1. Disable Torque
         sources = arm_source + hand_source
         self.nana_arm_handler.disableTorque(sources)
 
-
-        # 2. record commands repeatedly every 1 second
+        # 2. record commands when the user presses Enter
         recorded_commands = []
 
         step = 0
-        print(f"[Info] Capturing current positions every {timeout} second(s).")
-        print("[Info] Press Enter (empty line) or type 'q'/'Q' then Enter to stop capturing.")
+        print("[Info] Capturing current positions on Enter key press.")
+        print("[Info] Press Enter (empty line) to capture one frame, or type 'q'/'Q' then Enter to stop capturing.")
 
         try:
             while True:
-                # capture current positions
-                command = self.check_current_position(arm_source, hand_source)
-                self._print_recorded_command(command)
-                recorded_commands.append(command)
-                step += 1
+                try:
+                    line = input("Press Enter to capture, or type 'q' then Enter to finish: ")
+                except EOFError:
+                    # e.g., user pressed Ctrl-D or input stream closed
+                    print("[Info] EOF received. Stopping capture.")
+                    break
 
-                # wait up to `timeout` seconds for user input; stop if Enter (empty) or 'q'/'Q'
-                print(f"Captured step {step}. Waiting {timeout} second(s) before next capture...")
-                rlist, _, _ = select.select([sys.stdin], [], [], timeout)
-                if not rlist:
-                    continue
-
-                line = sys.stdin.readline()
                 if line is None:
                     continue
 
                 s = line.strip()
-                if s == '' or s in ('q', 'Q'):
+                # if user requested to stop
+                if s in ('q', 'Q'):
                     print("[Info] Stop signal received. Stopping capture.")
                     break
+
+                # otherwise capture current positions
+                command = self.get_position(arm_source, hand_source)
+                self._print_recorded_command(command)
+                recorded_commands.append(command)
+                step += 1
+                print(f"Captured step {step}.")
 
         except KeyboardInterrupt:
             print("[Info] KeyboardInterrupt received. Stopping capture.")
@@ -463,16 +525,16 @@ if __name__ == "__main__":
 
                     controller.execute_pose(pose_data)
 
-                # Check Current Position
+                # Check Current Position (interactive: Enter to sample, 'q' to quit)
                 elif cmd == 'check':
-                    controller.check_current_position(
+                    controller.check_menu(
                         [
-                            (1, 'dynamixel'), 
-                            (2, 'dynamixel'), 
-                            (3, 'dynamixel'), 
-                            (4, 'dynamixel'), 
-                            (5, 'dynamixel'), 
-                            (6, 'dynamixel')
+                            (1, 'dynamixel'),
+                            (2, 'dynamixel'),
+                            (3, 'dynamixel'),
+                            (4, 'dynamixel'),
+                            (5, 'dynamixel'),
+                            (6, 'dynamixel'),
                         ],
                         [
                             (21, 'dynamixel'),
@@ -484,6 +546,9 @@ if __name__ == "__main__":
                 
                 # Make feasible random position and execute
                 elif cmd == 'random':
+                    print("Maybe it is harmful if the robot moves to random position. Make sure to clear the area around the robot and be ready to stop the program if anything goes wrong.")
+                    input("Press Enter to continue or Ctrl-C to abort...")
+
                     controller._make_random_values_under_hard_limits(
                         [
                             (1, 'dynamixel'), 
