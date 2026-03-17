@@ -1,4 +1,5 @@
 import os
+import time
 from typing import Dict, Any
 
 from .dynamixel_sdk import DynamixelSDK  # unified SDK class
@@ -100,8 +101,7 @@ class DynamixelSDKWrapper:
     def writePosition(self, id, position):
         print(f"[DynamixelSDKWrapper] Writing position {position} to ID {id}")
         self.setGoalPosition(id, position)
-        
-        
+           
     def readPosition(self, id):
 
         position = self.getCurrentPosition(id)[0]
@@ -109,8 +109,7 @@ class DynamixelSDKWrapper:
         print(f"[DynamixelSDKWrapper] Reading position from Dynamixel ID {id} is {position}")
 
         return position
-        
-    
+
     """ Helper Function """
     def enableTorque(self, id):
         idx = self.dxl_ids.index(id)
@@ -139,3 +138,30 @@ class DynamixelSDKWrapper:
     def isMoving(self, id):
         idx = self.dxl_ids.index(id)
         return self.dynamixel_sdk.read1ByteTxRx(id, self.dynamixel_control_tables[self.dxl_models[idx]].get('Moving').get('address')) == 1
+
+    def reset_serial_handler(self, new_serial_handler):
+        self.serial_handler = new_serial_handler
+        self.dynamixel_sdk.ser = new_serial_handler
+        # _SerialPortAdapter도 새로운 serial 참조로 갱신해야 실제 통신에 사용됨
+        self.dynamixel_sdk._port.ser = new_serial_handler
+        print(f"[DynamixelSDKWrapper] Serial handler reset successfully")
+
+    def setSafeTorqueOn(self, id):
+        
+        # 하드웨어 reboot
+        print(f"[DynamixelSDKWrapper] Rebooting ID {id} to ensure safe torque on")
+        self.dynamixel_sdk.reboot(id)
+        time.sleep(0.5)  # Reboot 후 잠시 대기
+
+        # 현재 위치 동기화
+        current_position = self.getCurrentPosition(id)[0]
+        print(f"[DynamixelSDKWrapper] Setting safe torque on for ID {id} by first moving to current position {current_position}")
+        self.setGoalPosition(id, current_position)
+
+        # 프로파일 재설정
+        self.setProfileVelocity(id, 1000)  # Set a reasonable velocity for the move
+        self.setProfileAcceleration(id, 2000)  # Set a reasonable acceleration for the move
+
+        # 최종적으로 토크 인가
+        self.enableTorque(id)
+    

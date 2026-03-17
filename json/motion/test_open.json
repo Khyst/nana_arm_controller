@@ -13,10 +13,5 @@
         "description": "Step 3: 물체를 향해 뻗기",
         "arm": [[1,"dynamixel",1915],[2,"dynamixel",1882],[3,"dynamixel",1200],[4,"dynamixel",1800],[5,"dynamixel",1328],[6,"dynamixel",1800]],
         "hand": [[21,"dynamixel",2300],[1,"mighty",2000],[2,"mighty",920],[3,"mighty",920]]
-    },
-    {
-        "description": "Step 4: 물체를 잡기",
-        "arm": [[1,"dynamixel",1915],[2,"dynamixel",1882],[3,"dynamixel",1200],[4,"dynamixel",1800],[5,"dynamixel",1328],[6,"dynamixel",1800]],
-        "hand": [[21,"dynamixel",2300],[1,"mighty",460],[2,"mighty",260],[3,"mighty",260]]
     }
 ]

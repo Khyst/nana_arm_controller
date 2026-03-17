@@ -31,7 +31,7 @@ class NanaArmController:
 
         self.load_and_declare_config()
 
-        self.nana_arm_handler = NanaArmWrapper(serial_port=self.port, baudrate=self.baudrate, dxl_models=self.dxl_models, mighty_models=self.mighty_models, dxl_ids=self.dxl_ids, mighty_ids=self.mighty_ids, dxl_params=self.dxl_params, mighty_params=self.mighty_params)
+        self.nana_arm_handler = NanaArmWrapper(serial_port=self.port, baudrate=self.baudrate, dxl_models=self.dxl_models, mighty_models=self.mighty_models, dxl_ids=self.dxl_ids, mighty_ids=self.mighty_ids, dxl_profiles=self.dxl_profiles, mighty_profiles=self.mighty_profiles)
 
         print("[Info] NANA Arm with Hand initialized successfully.")
 
@@ -100,8 +100,7 @@ class NanaArmController:
         self.dxl_ids = dxl_data.get('dxl_ids', [])
         self.dxl_names = dxl_data.get('dxl_names', [])
         self.dxl_models = dxl_data.get('dxl_models', [])
-
-        self.dxl_params = dxl_data.get('dxl_params', {})
+        self.dxl_profiles = dxl_data.get('dxl_profiles', {})
 
         dxl_limits = dxl_data.get('limits', {})
         self.dxl_hard_position_max_limits = dxl_limits.get('hard', {}).get('position', {}).get('max', [])
@@ -116,7 +115,7 @@ class NanaArmController:
         self.mighty_names = mighty_data.get('mighty_names', [])
         self.mighty_models = mighty_data.get('mighty_models', [])
 
-        self.mighty_params = mighty_data.get('mighty_params', {})
+        self.mighty_profiles = mighty_data.get('mighty_profiles', {})
 
         mighty_limits = mighty_data.get('limits', {})
         self.mighty_hard_position_max_limits = mighty_limits.get('hard', {}).get('position', {}).get('max', [])
@@ -443,6 +442,16 @@ class NanaArmController:
         # 4. Save Commands into File
         self._save_commands(recorded_commands, arm_source=arm_source, hand_source=hand_source)
 
+    # Safe Torque On by first sending Move Command to current position to prevent sudden movement
+    def safe_torque_on(self, sources):
+        """
+            Torque On 시 현재 위치로 Move Command를 먼저 보내서 갑작스러운 움직임을 방지하는 함수
+        """
+
+        print("[Info] Enabling torque safely by first moving to current position...")
+
+        self.nana_arm_handler.safe_torque_on(sources)
+
 def debug_mode(controller, motion_file):
     motion_data = controller._load_motion_data(motion_file)
 
@@ -608,8 +617,8 @@ if __name__ == "__main__":
 
                 # Torque On
                 elif cmd == 'torque_on':
-                    controller.nana_arm_handler.enableTorque(
-                         [
+                    controller.safe_torque_on(
+                        [
                             (1, 'dynamixel'), 
                             (2, 'dynamixel'), 
                             (3, 'dynamixel'), 

@@ -24,18 +24,18 @@ if __name__ == "__main__":
     
     for _ in range(REPEAT_COUNT):
         print(f"\n\n[Experiment] Starting pick_cup motion...")
-        pick_cup_motion_data = controller._load_motion_data("pick_cup")
+        pick_cup_motion_data = controller._load_motion_data("pick_cup_and_give")
         if pick_cup_motion_data is None:
-            print("[Error] Failed to load pick_cup_motion data.")
+            print("[Error] Failed to load pick_cup_and_give motion data.")
             sys.exit(1)
         controller.execute_motion(pick_cup_motion_data)
 
         time.sleep(1.0)
 
-        print(f"\n\n[Experiment] Starting release_cup motion...")
-        release_cup_motion_data = controller._load_motion_data("release_cup")
+        print(f"\n\n[Experiment] Starting give_cup_and_release motion...")
+        release_cup_motion_data = controller._load_motion_data("give_cup_and_release")
         if release_cup_motion_data is None:
-            print("[Error] Failed to load release_cup_motion data.")
+            print("[Error] Failed to load give_cup_and_release motion data.")
             sys.exit(1)
         controller.execute_motion(release_cup_motion_data)
 
