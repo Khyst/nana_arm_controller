@@ -95,8 +95,7 @@ class DynamixelSDKWrapper:
     def writePosition(self, id, position):
         print(f"[DynamixelSDKWrapper] Writing position {position} to ID {id}")
         self.setGoalPosition(id, position)
-        
-        
+                
     def readPosition(self, id):
 
         position = self.getCurrentPosition(id)[0]
@@ -104,7 +103,6 @@ class DynamixelSDKWrapper:
         print(f"[DynamixelSDKWrapper] Reading position from Dynamixel ID {id} is {position}")
 
         return position
-        
     
     """ Helper Function """
     def enableTorque(self, id):

@@ -381,17 +381,17 @@ class NanaArmController:
         # 4. Save Commands into File
         self._save_commands(recorded_commands, arm_source=arm_source, hand_source=hand_source)
 
-def debug_mode(controller, motion_file):
-    motion_data = controller._load_motion_data(motion_file)
+    def debug_mode(controller, motion_file):
+        motion_data = controller._load_motion_data(motion_file)
 
-    if motion_data is None:
-        print(f"[Error] {motion_file} 모션 데이터를 불러오는데 실패했습니다. 파일 이름과 경로를 확인해주세요.")
-        print(f"path: {os.path.join(CURRENT_DIR, 'json', 'motion', motion_file + '.json')}")
-        sys.exit(1)
+        if motion_data is None:
+            print(f"[Error] {motion_file} 모션 데이터를 불러오는데 실패했습니다. 파일 이름과 경로를 확인해주세요.")
+            print(f"path: {os.path.join(CURRENT_DIR, 'json', 'motion', motion_file + '.json')}")
+            sys.exit(1)
 
-    controller.execute_motion(motion_data)
+        controller.execute_motion(motion_data)
 
-    return True
+        return True
 
 if __name__ == "__main__":
 

@@ -31,7 +31,6 @@ class MightyZapSDKWrapper:
             # Torque Enable
             self.enableTorque(id)
             
-
     def writePosition(self, id, position):
         """Write goal position to actuator 'id'.
 
