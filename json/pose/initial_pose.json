@@ -1,5 +1,5 @@
 {
     "description": "Step 1: 초기 위치 및 중심 잡기",
-    "arm": [[1,"dynamixel",2050],[2,"dynamixel",2047],[3,"dynamixel",2044],[4,"dynamixel",2049],[5,"dynamixel",1202],[6,"dynamixel",2080]],
+    "arm": [[1,"dynamixel",2050],[2,"dynamixel",2047],[3,"dynamixel",2044],[4,"dynamixel",2049],[5,"dynamixel",1328],[6,"dynamixel",2080]],
     "hand": [[21,"dynamixel",1027],[1,"mighty",2000],[2,"mighty",920],[3,"mighty",920]]
 }
